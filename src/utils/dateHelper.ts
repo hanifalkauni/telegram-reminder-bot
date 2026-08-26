@@ -117,6 +117,47 @@ export function getNextUpcomingOccurrence(dateStr: string): string {
 }
 
 /**
+ * Menambahkan sejumlah bulan ke tanggal YYYY-MM-DD
+ */
+export function addMonthsToDate(dateStr: string, monthsToAdd: number): string {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const d = new Date(year, month, day);
+  d.setMonth(d.getMonth() + monthsToAdd);
+
+  const nextYear = d.getFullYear();
+  const nextMonth = padZero(d.getMonth() + 1);
+  const nextDay = padZero(d.getDate());
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+/**
+ * Menghitung tanggal siklus berikutnya berdasarkan recurring_type
+ */
+export function calculateNextRecurringDate(dateStr: string, recurringType: string): string {
+  switch (recurringType) {
+    case 'MONTHLY':
+      return addMonthsToDate(dateStr, 1);
+    case 'QUARTERLY':
+      return addMonthsToDate(dateStr, 3);
+    case 'SEMI_ANNUAL':
+      return addMonthsToDate(dateStr, 6);
+    case 'YEARLY':
+      return addMonthsToDate(dateStr, 12);
+    case 'FIVE_YEARS':
+      return addMonthsToDate(dateStr, 60);
+    default:
+      return dateStr;
+  }
+}
+
+/**
  * Format visual status urgensi
  */
 export function getUrgencyBadge(daysLeft: number): { badge: string; status: string } {

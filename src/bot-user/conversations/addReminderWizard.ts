@@ -65,8 +65,8 @@ export async function addReminderWizard(
 
   // 4. Input Tanggal Jatuh Tempo
   const datePrompt = isBirthday
-    ? `📅 <b>Langkah 3 dari 4: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
-    : `📅 <b>Langkah 3 dari 4: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
+    ? `📅 <b>Langkah 3 dari 5: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
+    : `📅 <b>Langkah 3 dari 5: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
 
   await ctx.reply(datePrompt, { parse_mode: 'HTML' });
 
@@ -85,11 +85,33 @@ export async function addReminderWizard(
     }
   }
 
-  // 5. Catatan Tambahan (Opsional) atau Foto
+  // 5. Pilihan Siklus Perulangan (Recurring Cycle)
+  let recurringType: 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS' = isBirthday ? 'YEARLY' : 'NONE';
+
+  if (!isBirthday) {
+    const recurringKeyboard = new InlineKeyboard()
+      .text('❌ Sekali Saja (Tanpa Perulangan)', 'rec:NONE').row()
+      .text('📅 Tiap 1 Bulan (Kos/Tagihan)', 'rec:MONTHLY')
+      .text('🛠️ Tiap 3 Bulan (AC/Oli)', 'rec:QUARTERLY').row()
+      .text('⚙️ Tiap 6 Bulan (Servis/KIR)', 'rec:SEMI_ANNUAL')
+      .text('🔄 Tiap 1 Tahun (STNK/Domain)', 'rec:YEARLY').row()
+      .text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS');
+
+    await ctx.reply(
+      '🔄 <b>Langkah 4 dari 5: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
+      { parse_mode: 'HTML', reply_markup: recurringKeyboard }
+    );
+
+    const recResponse = await conversation.waitForCallbackQuery(/^rec:(NONE|MONTHLY|QUARTERLY|SEMI_ANNUAL|YEARLY|FIVE_YEARS)$/);
+    await recResponse.answerCallbackQuery();
+    recurringType = recResponse.match[1] as typeof recurringType;
+  }
+
+  // 6. Catatan Tambahan (Opsional) atau Foto
   const skipKeyboard = new InlineKeyboard().text('⏩ Lewati Catatan', 'wizard_skip_notes');
   const notesPrompt = isBirthday
-    ? `🎁 <b>Langkah 4 dari 4: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
-    : `📝 <b>Langkah 4 dari 4: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
+    ? `🎁 <b>Langkah 5 dari 5: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
+    : `📝 <b>Langkah 5 dari 5: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
 
   await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipKeyboard });
 
@@ -110,7 +132,7 @@ export async function addReminderWizard(
     }
   }
 
-  // 6. Simpan ke Database Supabase
+  // 7. Simpan ke Database Supabase
   const createdItem = await conversation.external(() =>
     createReminder({
       userId: access.user.id,
@@ -120,7 +142,8 @@ export async function addReminderWizard(
       dueDate: validDateStr!,
       reminderIntervals: selectedCat?.default_reminder_days || [30, 7, 3, 1, 0],
       photoFileId,
-      isRecurring: isBirthday,
+      isRecurring: recurringType !== 'NONE',
+      recurringType,
     })
   );
 
@@ -128,13 +151,23 @@ export async function addReminderWizard(
   successMsg += `<b>${selectedCat?.icon} ${escapeHTML(createdItem.title)}</b>\n`;
   successMsg += `📂 Kategori: <i>${escapeHTML(selectedCat?.name || '')}</i>\n`;
   successMsg += `📅 Tanggal: <b>${formatDateID(createdItem.due_date)}</b>\n`;
+  if (recurringType !== 'NONE') {
+    const recLabelMap: Record<string, string> = {
+      MONTHLY: 'Tiap 1 Bulan',
+      QUARTERLY: 'Tiap 3 Bulan',
+      SEMI_ANNUAL: 'Tiap 6 Bulan',
+      YEARLY: 'Tiap 1 Tahun',
+      FIVE_YEARS: 'Tiap 5 Tahun',
+    };
+    successMsg += `🔄 Perulangan: <b>${recLabelMap[recurringType]} (Otomatis)</b>\n`;
+  }
   if (createdItem.notes) {
     successMsg += `📝 Catatan: <code>${escapeHTML(createdItem.notes)}</code>\n`;
   }
   if (isBirthday) {
     successMsg += `\n🎂 <i>Pengingat ini berulang otomatis setiap tahun! Bot akan mengingatkan pada H-14, H-7, H-3, H-1, dan Hari H.</i>`;
   } else {
-    successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda pada H-30, H-7, H-3, H-1, dan hari H!</i>`;
+    successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda menjelang jatuh tempo!</i>`;
   }
 
   const doneKeyboard = new InlineKeyboard()

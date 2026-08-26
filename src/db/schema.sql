@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS public.reminder_items (
     due_date DATE NOT NULL,
     reminder_intervals INT[] DEFAULT '{30, 7, 3, 1, 0}', -- H minus berapa saja notifikasi dikirim
     photo_file_id TEXT, -- ID file telegram jika user upload nota/kartu
-    is_recurring BOOLEAN DEFAULT FALSE, -- Otomatis berulang tahunan untuk Ulang Tahun & Anniversary
+    is_recurring BOOLEAN DEFAULT FALSE,
+    recurring_type VARCHAR(20) DEFAULT 'NONE', -- NONE, MONTHLY, QUARTERLY, SEMI_ANNUAL, YEARLY, FIVE_YEARS
     is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -109,11 +110,15 @@ CREATE INDEX IF NOT EXISTS idx_confirmation_codes_code ON public.confirmation_co
 INSERT INTO public.categories (code, name, icon, default_reminder_days)
 VALUES 
     ('birthday', 'Ulang Tahun & Anniversary', '🎂', '{14, 7, 3, 1, 0}'),
-    ('electronics', 'Garansi Elektronik / Gadget', '💻', '{30, 7, 3, 1, 0}'),
     ('vehicle', 'Pajak STNK & SIM Kendaraan', '🚗', '{30, 14, 7, 3, 1, 0}'),
-    ('document', 'Paspor & Dokumen Legalitas', '📄', '{60, 30, 14, 7, 0}'),
+    ('maintenance', 'Servis AC, Kendaraan & Rumah', '🛠️', '{14, 7, 3, 1, 0}'),
+    ('health', 'Kesehatan, Obat & Perawatan', '💊', '{14, 7, 3, 1, 0}'),
+    ('financial', 'Kartu ATM, Finansial & Tagihan', '💳', '{14, 7, 3, 1, 0}'),
+    ('electronics', 'Garansi Elektronik & Gadget', '💻', '{30, 7, 3, 1, 0}'),
+    ('document', 'Paspor, Visa & Lisensi Legal', '📄', '{60, 30, 14, 7, 0}'),
     ('digital', 'Domain, Hosting & Subscription', '🌐', '{14, 7, 3, 1, 0}'),
-    ('property', 'Sewa Properti, PBB & Tagihan', '🏠', '{30, 14, 7, 3, 1, 0}'),
+    ('property', 'Sewa Rumah, Kos & Properti', '🏠', '{30, 14, 7, 3, 1, 0}'),
+    ('pet', 'Perawatan Hewan Peliharaan', '🐾', '{7, 3, 1, 0}'),
     ('custom', 'Lainnya / Kebutuhan Pribadi', '📌', '{30, 7, 3, 1, 0}')
 ON CONFLICT (code) DO NOTHING;
 

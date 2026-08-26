@@ -13,6 +13,8 @@ export interface UserRecord {
 
 export type UserAccessState = 'ADMIN' | 'ACTIVE_SUBSCRIBER' | 'FREE_TRIAL' | 'EXPIRED';
 
+export type RecurringType = 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS';
+
 export interface CategoryRecord {
   id: number;
   code: string;
@@ -33,6 +35,7 @@ export interface ReminderItemRecord {
   reminder_intervals: number[];
   photo_file_id: string | null;
   is_recurring: boolean;
+  recurring_type: RecurringType;
   is_completed: boolean;
   created_at: string;
   updated_at: string;

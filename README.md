@@ -1,12 +1,16 @@
 # ⏰ TempoGuard: Telegram Reminder SaaS Bot
 
 TempoGuard adalah platform SaaS bot Telegram untuk memantau dan mengingatkan tanggal jatuh tempo / kedaluwarsa dokumen dan barang penting secara otomatis, seperti:
-- 🎂 **Ulang Tahun & Anniversary (Perulangan Tahunan Otomatis)**
-- 💻 **Garansi Elektronik & Gadget**
-- 🚗 **Pajak STNK & SIM Kendaraan**
-- 📄 **Paspor, Asuransi & Dokumen Legalitas**
-- 🌐 **Domain, Hosting & Subscription**
+- 🎂 **Ulang Tahun & Anniversary** (Perulangan Tahunan Otomatis)
+- 🚗 **Pajak STNK & SIM Kendaraan** (Siklus 1 Tahun & 5 Tahun)
+- 🛠️ **Servis AC, Kendaraan & Rumah** (Siklus 3 Bulan / 6 Bulan)
+- 💊 **Kesehatan, Obat & Perawatan** (Obat rutin, vaksin hewan, MCU)
+- 💳 **Kartu ATM, Finansial & Tagihan** (Sewa kos, IPL, tagihan kartu kredit)
+- 💻 **Garansi Elektronik & Gadget** (Laptop, HP, kulkas, AC, dsb)
+- 📄 **Paspor, Visa & Lisensi Profesi** (STR, KTA, lisensi kerja, sertifikasi)
+- 🌐 **Domain, Hosting & Subscription** (Cloud, domain, Netflix, dsb)
 - 🏠 **Sewa Properti & Tagihan Berkala**
+- 🐾 **Perawatan Hewan Peliharaan** (Obat cacing, tetes kutu, vaksin)
 
 Dibangun dengan arsitektur **Clean Code**, **TypeScript**, **grammY Framework**, **Supabase PostgreSQL**, dan **Vercel Serverless Functions & Cron**.
 
@@ -15,10 +19,12 @@ Dibangun dengan arsitektur **Clean Code**, **TypeScript**, **grammY Framework**,
 ## 🌟 Fitur Utama
 
 - 🎁 **Model Bisnis SaaS Freemium**: Free Trial hingga 2 item aktif; akses tanpa batas (*Unlimited*) untuk Pro Subscriber.
+- 🔄 **Siklus Perulangan Fleksibel (*Flexible Recurrence*)**: Mendukung perulangan otomatis Bulanan, 3 Bulanan, 6 Bulanan, 1 Tahunan, dan 5 Tahunan.
+- ⚡ **Tombol Quick Renew 1-Klik**: Perpanjang item secara instan `[+1 Bln]`, `[+3 Bln]`, `[+6 Bln]`, atau `[+1 Thn]` langsung dari Telegram.
 - 🤖 **Arsitektur Dual Bot**:
   - **User Bot**: Pengingat berkala, wizard pencatatan `/add`, ekspor data CSV `/export`, dan pembayaran invoice.
   - **Admin Bot**: Persetujuan bukti transfer 1-klik (*One-Tap Approve/Reject*), generator kode voucher (`/generate_code`), manajemen paket/rekening, dan analitik bisnis (`/admin_stats`).
-- ⏰ **Pengingat Berkala Otomatis**: Vercel Cron berjalan setiap pukul **07:00 WIB** (`00:00 UTC`) memproses pengingat H-30, H-14, H-7, H-3, H-1, dan hari H.
+- ⏰ **Pengingat Berkala Otomatis**: Vercel Cron berjalan setiap pukul **07:00 WIB** (`00:00 UTC`) memproses pengingat H-60, H-30, H-14, H-7, H-3, H-1, dan hari H.
 - 🛡️ **Anti-Spam & Rate Limiter**: Proteksi *flood control* 3 req/2s dan batas harian tiket bantuan `/contact` 3 pesan/24 jam.
 - 🔒 **Zero Duplicate Alerts**: Idempotency log table menjamin tidak ada notifikasi ganda.
 - 💸 **100% Free-Tier Friendly**: Berjalan mulus di free tier Vercel & Supabase tanpa biaya server.

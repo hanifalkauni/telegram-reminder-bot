@@ -5,6 +5,7 @@ import {
   getReminderById,
   deleteReminder,
   renewReminderDate,
+  renewReminderByMonths,
   snoozeReminder
 } from '../../services/reminderService.js';
 import {
@@ -163,7 +164,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     await ctx.reply(invoiceText, { parse_mode: 'HTML' });
   });
 
-  // 3. Detail Item & Actions (View, Delete, Renew, Snooze)
+  // 3. Detail Item & Actions (View, Delete, Quick Renew, Snooze)
   bot.callbackQuery(/^action:view:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const reminderId = parseInt(ctx.match[1], 10);
@@ -180,10 +181,14 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
     const card = formatReminderItemCard(item);
     const keyboard = new InlineKeyboard()
-      .text('🔄 Perpanjang (+1 Thn)', `action:renew:${item.id}`)
-      .text('⏸️ Snooze (+7 Hari)', `action:snooze:${item.id}`)
+      .text('➕ +1 Bln', `action:renew_months:${item.id}:1`)
+      .text('➕ +3 Bln', `action:renew_months:${item.id}:3`)
+      .text('➕ +6 Bln', `action:renew_months:${item.id}:6`)
+      .text('➕ +1 Thn', `action:renew_months:${item.id}:12`)
       .row()
+      .text('⏸️ Snooze (+7 Hari)', `action:snooze:${item.id}`)
       .text('🗑️ Hapus Item', `action:delete:${item.id}`)
+      .row()
       .text('📋 Kembali ke Daftar', 'action:list_reminders');
 
     if (item.photo_file_id) {
@@ -213,6 +218,28 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       });
     } else {
       await ctx.reply('⚠️ Gagal menghapus item.');
+    }
+  });
+
+  // Quick Renew (+1 bln, +3 bln, +6 bln, +12 bln)
+  bot.callbackQuery(/^action:renew_months:(\d+):(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const reminderId = parseInt(ctx.match[1], 10);
+    const months = parseInt(ctx.match[2], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const updated = await renewReminderByMonths(reminderId, access.user.id, months);
+
+    if (updated) {
+      const label = months === 12 ? '1 Tahun' : `${months} Bulan`;
+      await ctx.reply(
+        `🔄 <b>Jatuh tempo berhasil diperpanjang ${label}!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
+        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
+      );
+    } else {
+      await ctx.reply('⚠️ Gagal memperpanjang tanggal item.');
     }
   });
 

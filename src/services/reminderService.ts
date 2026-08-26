@@ -1,5 +1,6 @@
 import { supabase } from '../db/supabase.js';
-import { ReminderItemRecord, CategoryRecord } from '../types/database.js';
+import { ReminderItemRecord, CategoryRecord, RecurringType } from '../types/database.js';
+import { addMonthsToDate } from '../utils/dateHelper.js';
 
 export interface CreateReminderDTO {
   userId: number;
@@ -10,6 +11,7 @@ export interface CreateReminderDTO {
   reminderIntervals?: number[];
   photoFileId?: string;
   isRecurring?: boolean;
+  recurringType?: RecurringType;
 }
 
 /**
@@ -30,6 +32,9 @@ export async function getActiveCategories(): Promise<CategoryRecord[]> {
  * Membuat reminder baru
  */
 export async function createReminder(dto: CreateReminderDTO): Promise<ReminderItemRecord> {
+  const recurringType = dto.recurringType || (dto.isRecurring ? 'YEARLY' : 'NONE');
+  const isRecurring = recurringType !== 'NONE';
+
   const { data, error } = await supabase
     .from('reminder_items')
     .insert({
@@ -40,7 +45,8 @@ export async function createReminder(dto: CreateReminderDTO): Promise<ReminderIt
       due_date: dto.dueDate,
       reminder_intervals: dto.reminderIntervals || [30, 7, 3, 1, 0],
       photo_file_id: dto.photoFileId || null,
-      is_recurring: dto.isRecurring || false,
+      is_recurring: isRecurring,
+      recurring_type: recurringType,
       is_completed: false,
     })
     .select('*, category:categories(*)')
@@ -101,15 +107,17 @@ export async function deleteReminder(reminderId: number, userId: number): Promis
 }
 
 /**
- * Memperpanjang jatuh tempo item (Renewal, cth: STNK bayar -> +1 tahun)
+ * Memperpanjang jatuh tempo item berdasarkan bulan (Quick Renew: +1 bln, +3 bln, +6 bln, +12 bln)
  */
-export async function renewReminderDate(reminderId: number, userId: number, additionalYears = 1): Promise<ReminderItemRecord | null> {
+export async function renewReminderByMonths(
+  reminderId: number,
+  userId: number,
+  monthsToAdd: number
+): Promise<ReminderItemRecord | null> {
   const existing = await getReminderById(reminderId, userId);
   if (!existing) return null;
 
-  const currentDue = new Date(existing.due_date);
-  currentDue.setFullYear(currentDue.getFullYear() + additionalYears);
-  const newDateStr = currentDue.toISOString().split('T')[0];
+  const newDateStr = addMonthsToDate(existing.due_date, monthsToAdd);
 
   const { data, error } = await supabase
     .from('reminder_items')
@@ -125,6 +133,13 @@ export async function renewReminderDate(reminderId: number, userId: number, addi
 
   if (error || !data) return null;
   return data as ReminderItemRecord;
+}
+
+/**
+ * Memperpanjang jatuh tempo item (Renewal, cth: STNK bayar -> +1 tahun)
+ */
+export async function renewReminderDate(reminderId: number, userId: number, additionalYears = 1): Promise<ReminderItemRecord | null> {
+  return renewReminderByMonths(reminderId, userId, additionalYears * 12);
 }
 
 /**

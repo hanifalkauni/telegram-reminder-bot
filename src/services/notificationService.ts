@@ -2,8 +2,14 @@ import { Bot, InlineKeyboard } from 'grammy';
 import { supabase } from '../db/supabase.js';
 import { env } from '../config/env.js';
 import { APP_CONSTANTS } from '../config/constants.js';
-import { formatDateID, getDaysDifference, getUrgencyBadge } from '../utils/dateHelper.js';
+import {
+  formatDateID,
+  getDaysDifference,
+  getUrgencyBadge,
+  calculateNextRecurringDate
+} from '../utils/dateHelper.js';
 import { escapeHTML } from '../utils/telegramHelper.js';
+import { RecurringType } from '../types/database.js';
 
 interface DailyReminderCandidate {
   reminder_id: number;
@@ -12,6 +18,7 @@ interface DailyReminderCandidate {
   due_date: string;
   photo_file_id: string | null;
   is_recurring: boolean;
+  recurring_type: RecurringType;
   user_id: number;
   telegram_id: number;
   first_name: string | null;
@@ -50,6 +57,7 @@ export async function executeDailyReminderWorker(): Promise<{
       due_date,
       photo_file_id,
       is_recurring,
+      recurring_type,
       reminder_intervals,
       user_id,
       users!inner (
@@ -130,6 +138,7 @@ export async function executeDailyReminderWorker(): Promise<{
             due_date: item.due_date,
             photo_file_id: item.photo_file_id,
             is_recurring: item.is_recurring || false,
+            recurring_type: item.recurring_type || 'NONE',
             user_id: user.id,
             telegram_id: user.telegram_id,
             first_name: user.first_name,
@@ -182,11 +191,11 @@ export async function executeDailyReminderWorker(): Promise<{
         if (candidate.notes) {
           caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
         }
-        caption += `\n💡 <i>Segera lakukan perpanjangan atau klaim sebelum batas waktu berakhir!</i>`;
+        caption += `\n💡 <i>Segera lakukan perpanjangan, servis atau pembayaran sebelum batas waktu berakhir!</i>`;
       }
 
       const keyboard = new InlineKeyboard()
-        .text('🔄 Perpanjang Item (+1 Thn)', `action:renew:${candidate.reminder_id}`)
+        .text('🔄 Perpanjang (+1 Thn)', `action:renew_months:${candidate.reminder_id}:12`)
         .text('📋 Lihat Daftar', 'action:list_reminders');
 
       if (candidate.photo_file_id) {
@@ -210,16 +219,14 @@ export async function executeDailyReminderWorker(): Promise<{
         status: 'SENT',
       });
 
-      // Jika item recurring (ulang tahun) dan sudah Hari H (days_before === 0), majukan otomatis ke tahun depan!
-      if (candidate.is_recurring && candidate.days_before === 0) {
-        const nextYearDate = new Date(candidate.due_date);
-        nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
-        const nextYearStr = nextYearDate.toISOString().split('T')[0];
+      // Jika item recurring dan sudah Hari H (days_before === 0), majukan otomatis sesuai siklus!
+      if (candidate.is_recurring && candidate.recurring_type !== 'NONE' && candidate.days_before === 0) {
+        const nextCycleDate = calculateNextRecurringDate(candidate.due_date, candidate.recurring_type);
 
         await supabase
           .from('reminder_items')
           .update({
-            due_date: nextYearStr,
+            due_date: nextCycleDate,
             updated_at: new Date().toISOString(),
           })
           .eq('id', candidate.reminder_id);

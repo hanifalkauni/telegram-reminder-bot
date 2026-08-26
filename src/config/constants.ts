@@ -13,10 +13,23 @@ export const APP_CONSTANTS = {
 
 export const CATEGORY_ICONS: Record<string, string> = {
   birthday: '🎂',
-  electronics: '💻',
   vehicle: '🚗',
+  maintenance: '🛠️',
+  health: '💊',
+  financial: '💳',
+  electronics: '💻',
   document: '📄',
   digital: '🌐',
   property: '🏠',
+  pet: '🐾',
   custom: '📌',
+};
+
+export const RECURRING_LABELS: Record<string, string> = {
+  NONE: 'Sekali Saja',
+  MONTHLY: 'Tiap 1 Bulan',
+  QUARTERLY: 'Tiap 3 Bulan',
+  SEMI_ANNUAL: 'Tiap 6 Bulan',
+  YEARLY: 'Tiap 1 Tahun',
+  FIVE_YEARS: 'Tiap 5 Tahun',
 };

@@ -26,12 +26,16 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     const name = from.first_name || 'Teman';
     const welcomeText = `👋 <b>Selamat datang di TempoGuard, ${escapeHTML(name)}!</b>\n\n` +
       `Platform asisten pengingat tanggal jatuh tempo otomatis untuk:\n` +
-      `• 🎂 <b>Ulang Tahun & Anniversary (Perulangan Otomatis)</b>\n` +
+      `• 🎂 <b>Ulang Tahun & Anniversary</b> (Perulangan Tahunan)\n` +
+      `• 🚗 <b>Pajak STNK & SIM Kendaraan</b> (1 Thn / 5 Thn)\n` +
+      `• 🛠️ <b>Servis AC, Kendaraan & Rumah</b> (Tiap 3/6 Bln)\n` +
+      `• 💊 <b>Kesehatan, Obat & Perawatan</b>\n` +
+      `• 💳 <b>Kartu ATM, Finansial & Tagihan</b> (Bulanan/Tahunan)\n` +
       `• 💻 <b>Garansi Gadget & Elektronik</b>\n` +
-      `• 🚗 <b>Pajak STNK & SIM Kendaraan</b>\n` +
-      `• 📄 <b>Paspor & Dokumen Legalitas</b>\n` +
-      `• 🌐 <b>Domain, Server & Langganan</b>\n` +
-      `• 🏠 <b>Sewa Rumah & Tagihan Berkala</b>\n\n` +
+      `• 📄 <b>Paspor, Visa & Lisensi Profesi</b>\n` +
+      `• 🌐 <b>Domain, Hosting & Subscription</b>\n` +
+      `• 🏠 <b>Sewa Rumah, Kos & Tagihan</b>\n` +
+      `• 🐾 <b>Perawatan Hewan Peliharaan</b>\n\n` +
       `🎁 <b>Akun Free Trial:</b> Anda dapat menyimpan hingga <b>2 item pengingat gratis</b>.\n\n` +
       `Silakan pilih menu di bawah untuk memulai:`;
 
