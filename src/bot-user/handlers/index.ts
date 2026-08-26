@@ -243,6 +243,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       .text('➕ +3 Bln', `action:renew_months:${item.id}:3`)
       .text('➕ +6 Bln', `action:renew_months:${item.id}:6`)
       .text('➕ +1 Thn', `action:renew_months:${item.id}:12`)
+      .text('➕ +5 Thn', `action:renew_months:${item.id}:60`)
       .row()
       .text('⏸️ Snooze (+7 Hari)', `action:snooze:${item.id}`)
       .text('🗑️ Hapus Item', `action:delete:${item.id}`)

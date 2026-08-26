@@ -222,12 +222,28 @@ export async function executeDailyReminderWorker(): Promise<{
         caption += `\n💡 <i>Segera lakukan perpanjangan, servis atau pembayaran sebelum batas waktu berakhir!</i>`;
       }
 
+      let renewButtonLabel = '🔄 Perpanjang (+1 Thn)';
+      let renewMonths = 12;
+      if (candidate.recurring_type === 'FIVE_YEARS') {
+        renewButtonLabel = '🔄 Perpanjang (+5 Thn)';
+        renewMonths = 60;
+      } else if (candidate.recurring_type === 'MONTHLY') {
+        renewButtonLabel = '🔄 Perpanjang (+1 Bln)';
+        renewMonths = 1;
+      } else if (candidate.recurring_type === 'QUARTERLY') {
+        renewButtonLabel = '🔄 Perpanjang (+3 Bln)';
+        renewMonths = 3;
+      } else if (candidate.recurring_type === 'SEMI_ANNUAL') {
+        renewButtonLabel = '🔄 Perpanjang (+6 Bln)';
+        renewMonths = 6;
+      }
+
       const gcalUrl = generateGoogleCalendarUrl(candidate.title, candidate.due_date, candidate.notes);
       const keyboard = new InlineKeyboard()
         .url('📅 Google Calendar', gcalUrl)
-        .text('🔄 Perpanjang (+1 Thn)', `action:renew_months:${candidate.reminder_id}:12`)
+        .text(renewButtonLabel, `action:renew_months:${candidate.reminder_id}:${renewMonths}`)
         .row()
-        .text('📋 Lihat Daftar', 'action:list_reminders');
+        .text('📋 Detail & Opsi Lain', `action:view:${candidate.reminder_id}`);
 
       if (candidate.photo_file_id) {
         await bot.api.sendPhoto(candidate.telegram_id, candidate.photo_file_id, {
