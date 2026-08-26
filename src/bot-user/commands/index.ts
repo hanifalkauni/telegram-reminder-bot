@@ -348,7 +348,16 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     }
   });
 
-  // 10. Master Admin Code Detection on Raw Text
+  // 10. /cancel & /batal (Batalkan percakapan/wizard yang sedang aktif)
+  bot.command(['cancel', 'batal'], async (ctx) => {
+    await ctx.conversation.exit();
+    await ctx.reply('❌ <b>Tidak ada proses yang sedang berjalan atau proses telah dibatalkan.</b>\n\nKetik /start untuk melihat menu utama atau /add untuk mencatat reminder baru.', {
+      parse_mode: 'HTML',
+      reply_markup: getMainMenuKeyboard(),
+    });
+  });
+
+  // 11. Master Admin Code Detection on Raw Text
   bot.on('message:text', async (ctx, next) => {
     const text = ctx.message.text.trim();
     if (text === env.ADMIN_MASTER_CODE) {

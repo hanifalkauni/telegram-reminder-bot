@@ -8,8 +8,14 @@ import { escapeHTML, generateGoogleCalendarUrl } from '../../utils/telegramHelpe
 export type UserBotContext = Context & ConversationFlavor;
 export type UserBotConversation = Conversation<UserBotContext>;
 
+function isCancelInput(text?: string): boolean {
+  if (!text) return false;
+  const clean = text.trim().toLowerCase();
+  return clean === '/cancel' || clean === '/batal' || clean === 'batal' || clean === '/start' || clean === '/menu' || clean === '/help' || clean === '/list';
+}
+
 /**
- * Interactive Wizard untuk menambah item reminder baru
+ * Interactive Wizard untuk menambah item reminder baru (Dapat dibatalkan di setiap langkah)
  */
 export async function addReminderWizard(
   conversation: UserBotConversation,
@@ -17,6 +23,8 @@ export async function addReminderWizard(
 ): Promise<void> {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
+
+  const cancelKeyboard = new InlineKeyboard().text('❌ Batalkan Penambahan', 'wizard_cancel');
 
   // 1. Validasi Hak Akses & Kuota
   const access = await conversation.external(() => checkUserAccess(telegramId));
@@ -27,7 +35,7 @@ export async function addReminderWizard(
     return;
   }
 
-  // 2. Pilih Kategori Item
+  // 2. Langkah 1: Pilih Kategori Item
   const categories = await conversation.external(() => getActiveCategories());
   const categoryKeyboard = new InlineKeyboard();
   categories.forEach((cat, index) => {
@@ -37,15 +45,24 @@ export async function addReminderWizard(
   categoryKeyboard.row().text('❌ Batalkan', 'wizard_cancel');
 
   await ctx.reply(
-    '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\nSilakan pilih jenis item yang ingin diingatkan:',
+    '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\nSilakan pilih jenis item yang ingin diingatkan:\n<i>(Ketik /batal atau klik tombol di bawah untuk membatalkan kapan saja)</i>',
     { parse_mode: 'HTML', reply_markup: categoryKeyboard }
   );
 
-  const catResponse = await conversation.waitForCallbackQuery(/^wizard_cat:\d+$|^wizard_cancel$/);
-  await catResponse.answerCallbackQuery();
+  const catResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
+  if (catResponse.callbackQuery) {
+    await catResponse.answerCallbackQuery();
+    if (catResponse.callbackQuery.data === 'wizard_cancel') {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
+  } else if (catResponse.message?.text && isCancelInput(catResponse.message.text)) {
+    await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+    return;
+  }
 
-  if (catResponse.callbackQuery.data === 'wizard_cancel') {
-    await ctx.reply('❌ Penambahan reminder dibatalkan.');
+  if (!catResponse.callbackQuery?.data?.startsWith('wizard_cat:')) {
+    await ctx.reply('❌ <b>Proses dibatalkan.</b> Silakan ketik /add untuk memulai kembali.', { parse_mode: 'HTML' });
     return;
   }
 
@@ -54,7 +71,7 @@ export async function addReminderWizard(
   const isBirthday = selectedCat?.code === 'birthday';
   const isSpiritual = selectedCat?.code === 'spiritual';
 
-  // 3. Input Judul / Nama Item
+  // 3. Langkah 2: Input Judul / Nama Item
   let titlePrompt = `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
   if (isBirthday) {
     titlePrompt = `🎂 <b>Langkah 2 dari 6: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`;
@@ -62,33 +79,60 @@ export async function addReminderWizard(
     titlePrompt = `🕊️ <b>Langkah 2 dari 6: Nama Ibadah / Donasi / Hari Suci</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda (misal: <i>"Natal & Paskah"</i>, <i>"Kurban Idul Adha"</i>, <i>"Persepuluhan / Zakat"</i>, <i>"Nyepi / Waisak"</i>, atau <i>"Donasi Rutin"</i>):`;
   }
 
-  await ctx.reply(titlePrompt, { parse_mode: 'HTML' });
+  await ctx.reply(titlePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
-  const titleMsg = await conversation.waitFor('message:text');
-  const title = titleMsg.message.text.trim();
+  const titleResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+  if (titleResponse.callbackQuery) {
+    await titleResponse.answerCallbackQuery();
+    if (titleResponse.callbackQuery.data === 'wizard_cancel') {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
+  }
 
-  // 4. Input Tanggal Jatuh Tempo
+  const rawTitle = titleResponse.message?.text?.trim() || '';
+  if (isCancelInput(rawTitle)) {
+    await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+    return;
+  }
+  const title = rawTitle;
+
+  // 4. Langkah 3: Input Tanggal Jatuh Tempo
   const datePrompt = isBirthday
     ? `📅 <b>Langkah 3 dari 6: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
     : `📅 <b>Langkah 3 dari 6: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
 
-  await ctx.reply(datePrompt, { parse_mode: 'HTML' });
+  await ctx.reply(datePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
   let validDateStr: string | null = null;
   while (!validDateStr) {
-    const dateMsg = await conversation.waitFor('message:text');
-    const parsed = parseDateInput(dateMsg.message.text);
+    const dateResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+    if (dateResponse.callbackQuery) {
+      await dateResponse.answerCallbackQuery();
+      if (dateResponse.callbackQuery.data === 'wizard_cancel') {
+        await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+        return;
+      }
+    }
+
+    const textInput = dateResponse.message?.text?.trim() || '';
+    if (isCancelInput(textInput)) {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
+
+    const parsed = parseDateInput(textInput);
     if (parsed) {
       validDateStr = isBirthday ? getNextUpcomingOccurrence(parsed) : parsed;
     } else {
       await ctx.reply(
-        '⚠️ <b>Format tanggal tidak valid!</b>\nMohon ketikkan format yang benar, contoh: <code>2026-12-31</code> atau <code>31/12/2026</code>:',
-        { parse_mode: 'HTML' }
+        '⚠️ <b>Format tanggal tidak valid!</b>\nMohon ketikkan format yang benar, contoh: <code>2026-12-31</code> atau <code>31/12/2026</code>\nAtau klik tombol batal di bawah:',
+        { parse_mode: 'HTML', reply_markup: cancelKeyboard }
       );
     }
   }
 
-  // 5. Pilihan Siklus Perulangan (Recurring Cycle)
+  // 5. Langkah 4: Pilihan Siklus Perulangan (Recurring Cycle)
   let recurringType: 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS' | 'HIJRI_YEARLY' = isBirthday ? 'YEARLY' : 'NONE';
 
   if (!isBirthday) {
@@ -106,52 +150,91 @@ export async function addReminderWizard(
     if (!isSpiritual) {
       recurringKeyboard.text('🌙 Tiap 1 Tahun Hijriyah (~354 Hari)', 'rec:HIJRI_YEARLY').row();
     }
-    recurringKeyboard.text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS');
+    recurringKeyboard
+      .text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS').row()
+      .text('❌ Batalkan Penambahan', 'wizard_cancel');
 
     await ctx.reply(
       '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
       { parse_mode: 'HTML', reply_markup: recurringKeyboard }
     );
 
-    const recResponse = await conversation.waitForCallbackQuery(/^rec:(NONE|MONTHLY|QUARTERLY|SEMI_ANNUAL|YEARLY|FIVE_YEARS|HIJRI_YEARLY)$/);
-    await recResponse.answerCallbackQuery();
-    recurringType = recResponse.match[1] as typeof recurringType;
+    const recResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
+    if (recResponse.callbackQuery) {
+      await recResponse.answerCallbackQuery();
+      if (recResponse.callbackQuery.data === 'wizard_cancel') {
+        await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+        return;
+      }
+      if (recResponse.callbackQuery.data.startsWith('rec:')) {
+        recurringType = recResponse.callbackQuery.data.split(':')[1] as typeof recurringType;
+      }
+    } else if (recResponse.message?.text && isCancelInput(recResponse.message.text)) {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
   }
 
-  // 6. Estimasi Biaya / Anggaran (Opsional)
+  // 6. Langkah 5: Estimasi Biaya / Anggaran (Opsional)
   let estimatedCost = 0;
-  const skipCostKeyboard = new InlineKeyboard().text('⏩ Lewati Biaya (Rp 0)', 'wizard_skip_cost');
+  const skipCostKeyboard = new InlineKeyboard()
+    .text('⏩ Lewati Biaya (Rp 0)', 'wizard_skip_cost')
+    .row()
+    .text('❌ Batalkan', 'wizard_cancel');
+
   await ctx.reply(
     `💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana (Opsional)</b>\n\nKetikkan perkiraan nominal biaya (misal: <code>150000</code>, <code>2500000</code>) untuk membantu menyiapkan dana saat jatuh tempo.\nAtau tekan tombol di bawah untuk melewati:`,
     { parse_mode: 'HTML', reply_markup: skipCostKeyboard }
   );
 
   const costResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
-  if (costResponse.callbackQuery && costResponse.callbackQuery.data === 'wizard_skip_cost') {
+  if (costResponse.callbackQuery) {
     await costResponse.answerCallbackQuery();
+    if (costResponse.callbackQuery.data === 'wizard_cancel') {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
+    // skip cost
   } else if (costResponse.message?.text) {
+    if (isCancelInput(costResponse.message.text)) {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
     const rawNumber = costResponse.message.text.replace(/[^0-9]/g, '');
     if (rawNumber) {
       estimatedCost = parseInt(rawNumber, 10);
     }
   }
 
-  // 7. Catatan Tambahan (Opsional) atau Foto
-  const skipKeyboard = new InlineKeyboard().text('⏩ Lewati Catatan', 'wizard_skip_notes');
+  // 7. Langkah 6: Catatan Tambahan (Opsional) atau Foto
+  const skipNotesKeyboard = new InlineKeyboard()
+    .text('⏩ Lewati Catatan & Simpan', 'wizard_skip_notes')
+    .row()
+    .text('❌ Batalkan', 'wizard_cancel');
+
   const notesPrompt = isBirthday
     ? `🎁 <b>Langkah 6 dari 6: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
     : `📝 <b>Langkah 6 dari 6: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
 
-  await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipKeyboard });
+  await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipNotesKeyboard });
 
   let notes: string | undefined;
   let photoFileId: string | undefined;
 
   const notesResponse = await conversation.waitFor(['message:text', 'message:photo', 'callback_query:data']);
 
-  if (notesResponse.callbackQuery && notesResponse.callbackQuery.data === 'wizard_skip_notes') {
+  if (notesResponse.callbackQuery) {
     await notesResponse.answerCallbackQuery();
+    if (notesResponse.callbackQuery.data === 'wizard_cancel') {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
+    // skip notes
   } else if (notesResponse.message?.text) {
+    if (isCancelInput(notesResponse.message.text)) {
+      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      return;
+    }
     notes = notesResponse.message.text.trim();
   } else if (notesResponse.message?.photo) {
     const photos = notesResponse.message.photo;
