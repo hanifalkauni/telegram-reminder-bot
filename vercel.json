@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/cron/reminder-worker",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

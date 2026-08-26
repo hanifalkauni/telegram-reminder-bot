@@ -1,0 +1,311 @@
+import { Bot, InlineKeyboard } from 'grammy';
+import { UserBotContext } from '../conversations/addReminderWizard.js';
+import { checkUserAccess } from '../../services/accessControl.js';
+import {
+  getReminderById,
+  deleteReminder,
+  renewReminderDate,
+  snoozeReminder
+} from '../../services/reminderService.js';
+import {
+  getActivePackages,
+  getActivePaymentMethods
+} from '../../services/subscriptionService.js';
+import { supabase } from '../../db/supabase.js';
+import { env } from '../../config/env.js';
+import { formatDateID, getDaysDifference } from '../../utils/dateHelper.js';
+import { escapeHTML, formatReminderItemCard, getMainMenuKeyboard } from '../../utils/telegramHelper.js';
+
+export function registerUserHandlers(bot: Bot<UserBotContext>): void {
+  // 1. Menu Navigations
+  bot.callbackQuery('action:add_reminder', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.conversation.enter('addReminderWizard');
+  });
+
+  bot.callbackQuery('action:list_reminders', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const { data: items } = await supabase
+      .from('reminder_items')
+      .select('*, category:categories(*)')
+      .eq('user_id', access.user.id)
+      .eq('is_completed', false)
+      .order('due_date', { ascending: true });
+
+    if (!items || items.length === 0) {
+      await ctx.reply('📭 Anda belum memiliki data reminder aktif.', {
+        reply_markup: new InlineKeyboard().text('➕ Tambah Reminder', 'action:add_reminder'),
+      });
+      return;
+    }
+
+    let text = `📋 <b>Daftar Pengingat Anda (${items.length} item)</b>\n\n`;
+    const keyboard = new InlineKeyboard();
+
+    items.forEach((item, index) => {
+      const daysLeft = getDaysDifference(item.due_date);
+      const icon = item.category?.icon || '📌';
+      text += `<b>${index + 1}. ${icon} ${escapeHTML(item.title)}</b>\n`;
+      text += `   📅 ${formatDateID(item.due_date)} (${daysLeft >= 0 ? `${daysLeft} hari lagi` : 'Expired'})\n\n`;
+      keyboard.text(`${index + 1}. ${item.title.substring(0, 18)}`, `action:view:${item.id}`).row();
+    });
+
+    keyboard.text('➕ Tambah Reminder', 'action:add_reminder');
+
+    await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
+  });
+
+  bot.callbackQuery('action:profile', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    let statusText = access.state === 'ADMIN' ? '👑 Admin' : access.state === 'ACTIVE_SUBSCRIBER' ? '💎 Pro Subscriber' : access.state === 'FREE_TRIAL' ? '🎁 Free Trial' : '⚠️ Expired';
+
+    let text = `👤 <b>Profil Pengguna</b>\n\n`;
+    text += `Nama: <b>${escapeHTML(from.first_name || 'User')}</b>\n`;
+    text += `Status: <b>${statusText}</b>\n`;
+    text += `Item Tersimpan: <b>${access.activeItemCount} item</b>\n`;
+    if (access.daysRemaining !== null) {
+      text += `Masa Aktif: <b>${access.daysRemaining} hari</b>\n`;
+    }
+
+    const keyboard = new InlineKeyboard();
+    if (access.state !== 'ACTIVE_SUBSCRIBER' && access.state !== 'ADMIN') {
+      keyboard.text('💎 Berlangganan Pro', 'action:subscribe').row();
+    }
+    keyboard.text('🔙 Menu Utama', 'action:main_menu');
+
+    await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
+  });
+
+  bot.callbackQuery('action:main_menu', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.reply('🏠 <b>Menu Utama TempoGuard</b>', {
+      parse_mode: 'HTML',
+      reply_markup: getMainMenuKeyboard(),
+    });
+  });
+
+  bot.callbackQuery('action:help', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.reply(
+      '📖 <b>Bantuan & Panduan:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /subscribe untuk upgrade kuota',
+      { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('➕ Tambah Item', 'action:add_reminder') }
+    );
+  });
+
+  bot.callbackQuery('action:subscribe', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const packages = await getActivePackages();
+
+    let text = `💎 <b>PILIH PAKET BERLANGGANAN</b>\n\nSilakan tentukan paket yang Anda inginkan:`;
+    const keyboard = new InlineKeyboard();
+
+    packages.forEach((pkg) => {
+      const priceStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(pkg.price);
+      const badge = pkg.badge ? ` (${pkg.badge})` : '';
+      keyboard.text(`📦 ${pkg.name} - ${priceStr}${badge}`, `action:select_pkg:${pkg.id}`).row();
+    });
+    keyboard.text('❌ Batal', 'action:close');
+
+    await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
+  });
+
+  // 2. Pilih Paket & Tampilkan Invoice
+  bot.callbackQuery(/^action:select_pkg:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const pkgId = parseInt(ctx.match[1], 10);
+    const packages = await getActivePackages();
+    const selectedPkg = packages.find((p) => p.id === pkgId);
+
+    if (!selectedPkg) {
+      await ctx.reply('⚠️ Paket tidak ditemukan.');
+      return;
+    }
+
+    const methods = await getActivePaymentMethods();
+    const priceFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(selectedPkg.price);
+
+    let invoiceText = `🧾 <b>INVOICE PEMBAYARAN LANGGANAN</b>\n\n`;
+    invoiceText += `📦 <b>Paket:</b> ${escapeHTML(selectedPkg.name)}\n`;
+    invoiceText += `💰 <b>Total Tagihan:</b> <b>${priceFormatted}</b>\n`;
+    invoiceText += `⏳ <b>Durasi:</b> ${selectedPkg.duration_days === 0 ? 'Seumur Hidup (Lifetime) ♾️' : `${selectedPkg.duration_days} Hari`}\n\n`;
+    invoiceText += `<b>PILIHAN METODE PEMBAYARAN:</b>\n`;
+
+    let qrisMethod = methods.find((m) => m.name.toLowerCase().includes('qris'));
+    methods.forEach((m, idx) => {
+      invoiceText += `${idx + 1}. <b>${escapeHTML(m.name)}</b>: <code>${escapeHTML(m.account_number || '-')}</code> (a.n. ${escapeHTML(m.account_name || '-')})\n`;
+    });
+
+    invoiceText += `\n📌 <b>Cara Konfirmasi:</b>\n` +
+      `1. Lakukan transfer sesuai nominal di atas.\n` +
+      `2. Kirimkan <b>foto / screenshot bukti transfer</b> ke chat ini.\n` +
+      `3. Tim admin akan memverifikasi dan mengaktifkan akun Anda secara instan!`;
+
+    if (qrisMethod?.image_url) {
+      try {
+        await ctx.replyWithPhoto(qrisMethod.image_url, {
+          caption: invoiceText,
+          parse_mode: 'HTML',
+        });
+        return;
+      } catch {
+        // Fallback to text if photo fails
+      }
+    }
+
+    await ctx.reply(invoiceText, { parse_mode: 'HTML' });
+  });
+
+  // 3. Detail Item & Actions (View, Delete, Renew, Snooze)
+  bot.callbackQuery(/^action:view:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const reminderId = parseInt(ctx.match[1], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const item = await getReminderById(reminderId, access.user.id);
+
+    if (!item) {
+      await ctx.reply('⚠️ Item pengingat tidak ditemukan.');
+      return;
+    }
+
+    const card = formatReminderItemCard(item);
+    const keyboard = new InlineKeyboard()
+      .text('🔄 Perpanjang (+1 Thn)', `action:renew:${item.id}`)
+      .text('⏸️ Snooze (+7 Hari)', `action:snooze:${item.id}`)
+      .row()
+      .text('🗑️ Hapus Item', `action:delete:${item.id}`)
+      .text('📋 Kembali ke Daftar', 'action:list_reminders');
+
+    if (item.photo_file_id) {
+      await ctx.replyWithPhoto(item.photo_file_id, {
+        caption: card,
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+    } else {
+      await ctx.reply(card, { parse_mode: 'HTML', reply_markup: keyboard });
+    }
+  });
+
+  bot.callbackQuery(/^action:delete:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const reminderId = parseInt(ctx.match[1], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const success = await deleteReminder(reminderId, access.user.id);
+
+    if (success) {
+      await ctx.reply('🗑️ <b>Item pengingat berhasil dihapus.</b>', {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().text('📋 Lihat Daftar Sisa', 'action:list_reminders'),
+      });
+    } else {
+      await ctx.reply('⚠️ Gagal menghapus item.');
+    }
+  });
+
+  bot.callbackQuery(/^action:renew:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const reminderId = parseInt(ctx.match[1], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const updated = await renewReminderDate(reminderId, access.user.id, 1);
+
+    if (updated) {
+      await ctx.reply(
+        `🔄 <b>Jatuh tempo berhasil diperpanjang 1 tahun!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
+        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
+      );
+    } else {
+      await ctx.reply('⚠️ Gagal memperpanjang tanggal item.');
+    }
+  });
+
+  bot.callbackQuery(/^action:snooze:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const reminderId = parseInt(ctx.match[1], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const updated = await snoozeReminder(reminderId, access.user.id, 7);
+
+    if (updated) {
+      await ctx.reply(
+        `⏸️ <b>Pengingat ditunda 7 hari ke depan!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
+        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
+      );
+    } else {
+      await ctx.reply('⚠️ Gagal menunda pengingat.');
+    }
+  });
+
+  bot.callbackQuery('action:close', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.deleteMessage().catch(() => {});
+  });
+
+  // 4. Upload Foto Bukti Pembayaran (Auto-Forward ke Admin Bot dengan Tombol 1-Tap Approval)
+  bot.on('message:photo', async (ctx) => {
+    const from = ctx.from;
+    if (!from) return;
+
+    const photos = ctx.message.photo;
+    const highestResPhoto = photos[photos.length - 1];
+
+    try {
+      const adminBot = new Bot(env.BOT_TOKEN_ADMIN);
+
+      let caption = `💳 <b>BUKTI TRANSFER PEMBAYARAN MASUK!</b>\n\n`;
+      caption += `👤 <b>Pengirim:</b> ${escapeHTML(from.first_name || 'User')} (@${from.username || 'tanpa_username'})\n`;
+      caption += `🆔 <b>Telegram ID:</b> <code>${from.id}</code>\n`;
+      if (ctx.message.caption) {
+        caption += `📝 <b>Keterangan:</b> <code>${escapeHTML(ctx.message.caption)}</code>\n`;
+      }
+      caption += `\nSilakan verifikasi mutasi rekening dan klik tombol tindakan di bawah:`;
+
+      // 1-Tap Action Keyboard for Admins
+      const adminKeyboard = new InlineKeyboard()
+        .text('✅ Approve 30 Hari', `adm_app:${from.id}:30`)
+        .text('✅ Approve 1 Tahun', `adm_app:${from.id}:365`)
+        .row()
+        .text('♾️ Approve Lifetime', `adm_app:${from.id}:0`)
+        .text('❌ Tolak', `adm_rej:${from.id}`);
+
+      // Ambil daftar admin
+      const { data: admins } = await supabase.from('users').select('telegram_id').eq('is_admin', true);
+
+      if (admins && admins.length > 0) {
+        for (const adm of admins) {
+          await adminBot.api.sendPhoto(adm.telegram_id, highestResPhoto.file_id, {
+            caption,
+            parse_mode: 'HTML',
+            reply_markup: adminKeyboard,
+          });
+        }
+      }
+
+      await ctx.reply(
+        '✅ <b>Bukti pembayaran Anda telah diterima!</b>\n\nTim admin kami sedang memverifikasi transfer Anda. Akun Anda akan aktif otomatis setelah disetujui dalam beberapa saat.',
+        { parse_mode: 'HTML' }
+      );
+    } catch (err) {
+      console.error('Error forwarding payment proof to admin:', err);
+      await ctx.reply('⚠️ Terjadi kendala saat meneruskan bukti transfer ke admin. Silakan coba lagi.');
+    }
+  });
+}

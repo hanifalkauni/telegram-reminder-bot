@@ -1,0 +1,36 @@
+{
+  "name": "reminder-bot",
+  "version": "1.0.0",
+  "description": "TempoGuard Telegram Reminder Bot SaaS - Built with grammY, Supabase, and Vercel Serverless",
+  "main": "api/bot/user-webhook.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev:user": "tsx src/dev/user-polling.ts",
+    "dev:admin": "tsx src/dev/admin-polling.ts"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "saas",
+    "reminder",
+    "grammy",
+    "supabase",
+    "vercel"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grammyjs/conversations": "^1.2.0",
+    "@grammyjs/ratelimiter": "^1.2.0",
+    "@supabase/supabase-js": "^2.48.1",
+    "dotenv": "^16.4.7",
+    "grammy": "^1.34.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
