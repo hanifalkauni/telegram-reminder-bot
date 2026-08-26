@@ -138,6 +138,51 @@ export function addMonthsToDate(dateStr: string, monthsToAdd: number): string {
 }
 
 /**
+ * Menambahkan 1 Tahun Hijriyah (~354 hari) ke tanggal YYYY-MM-DD
+ * Sangat presisi untuk perulangan Kurban Idul Adha (10 Dzulhijjah), Haul Zakat Maal, dan Ramadhan.
+ */
+export function addHijriYearToDate(dateStr: string): string {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const d = new Date(year, month, day);
+  // Tambahkan 354 hari (1 tahun lunar Hijriyah)
+  d.setDate(d.getDate() + 354);
+
+  const nextYear = d.getFullYear();
+  const nextMonth = padZero(d.getMonth() + 1);
+  const nextDay = padZero(d.getDate());
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+/**
+ * Format tanggal Masehi ke representasi Kalender Hijriyah
+ * Contoh: "27 Mei 2026" -> "10 Dzulhijjah 1447 H"
+ */
+export function formatHijriDate(dateInput: string | Date): string {
+  try {
+    const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(d.getTime())) return '';
+
+    const formatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic-umalqura', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    const formatted = formatter.format(d);
+    return `${formatted} H`;
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Menghitung tanggal siklus berikutnya berdasarkan recurring_type
  */
 export function calculateNextRecurringDate(dateStr: string, recurringType: string): string {
@@ -152,6 +197,8 @@ export function calculateNextRecurringDate(dateStr: string, recurringType: strin
       return addMonthsToDate(dateStr, 12);
     case 'FIVE_YEARS':
       return addMonthsToDate(dateStr, 60);
+    case 'HIJRI_YEARLY':
+      return addHijriYearToDate(dateStr);
     default:
       return dateStr;
   }

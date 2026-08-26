@@ -37,4 +37,5 @@ export const RECURRING_LABELS: Record<string, string> = {
   SEMI_ANNUAL: 'Tiap 6 Bulan',
   YEARLY: 'Tiap 1 Tahun',
   FIVE_YEARS: 'Tiap 5 Tahun',
+  HIJRI_YEARLY: 'Tiap 1 Tahun Hijriyah (~354 Hari)',
 };

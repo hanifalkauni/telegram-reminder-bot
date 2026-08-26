@@ -52,11 +52,15 @@ export async function addReminderWizard(
   const categoryId = parseInt(catResponse.callbackQuery.data.split(':')[1], 10);
   const selectedCat = categories.find((c) => c.id === categoryId);
   const isBirthday = selectedCat?.code === 'birthday';
+  const isSpiritual = selectedCat?.code === 'spiritual';
 
   // 3. Input Judul / Nama Item
-  const titlePrompt = isBirthday
-    ? `🎂 <b>Langkah 2 dari 6: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`
-    : `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
+  let titlePrompt = `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
+  if (isBirthday) {
+    titlePrompt = `🎂 <b>Langkah 2 dari 6: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`;
+  } else if (isSpiritual) {
+    titlePrompt = `🕌 <b>Langkah 2 dari 6: Nama Ibadah / Zakat</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda ibadah (misal: <i>"Kurban Idul Adha"</i>, <i>"Haul Tabungan Zakat Maal"</i>, atau <i>"Qadha Puasa Ramadhan"</i>):`;
+  }
 
   await ctx.reply(titlePrompt, { parse_mode: 'HTML' });
 
@@ -85,23 +89,31 @@ export async function addReminderWizard(
   }
 
   // 5. Pilihan Siklus Perulangan (Recurring Cycle)
-  let recurringType: 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS' = isBirthday ? 'YEARLY' : 'NONE';
+  let recurringType: 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS' | 'HIJRI_YEARLY' = isBirthday ? 'YEARLY' : 'NONE';
 
   if (!isBirthday) {
-    const recurringKeyboard = new InlineKeyboard()
+    const recurringKeyboard = new InlineKeyboard();
+    if (isSpiritual) {
+      recurringKeyboard.text('🌙 Tiap 1 Tahun Hijriyah (Kurban/Zakat ~354 Hari)', 'rec:HIJRI_YEARLY').row();
+    }
+    recurringKeyboard
       .text('❌ Sekali Saja (Tanpa Perulangan)', 'rec:NONE').row()
       .text('📅 Tiap 1 Bulan (Kos/Tagihan)', 'rec:MONTHLY')
       .text('🛠️ Tiap 3 Bulan (AC/Oli)', 'rec:QUARTERLY').row()
       .text('⚙️ Tiap 6 Bulan (Servis/KIR)', 'rec:SEMI_ANNUAL')
-      .text('🔄 Tiap 1 Tahun (STNK/Domain)', 'rec:YEARLY').row()
-      .text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS');
+      .text('🔄 Tiap 1 Tahun Masehi (STNK/Domain)', 'rec:YEARLY').row();
+    
+    if (!isSpiritual) {
+      recurringKeyboard.text('🌙 Tiap 1 Tahun Hijriyah (~354 Hari)', 'rec:HIJRI_YEARLY').row();
+    }
+    recurringKeyboard.text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS');
 
     await ctx.reply(
       '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
       { parse_mode: 'HTML', reply_markup: recurringKeyboard }
     );
 
-    const recResponse = await conversation.waitForCallbackQuery(/^rec:(NONE|MONTHLY|QUARTERLY|SEMI_ANNUAL|YEARLY|FIVE_YEARS)$/);
+    const recResponse = await conversation.waitForCallbackQuery(/^rec:(NONE|MONTHLY|QUARTERLY|SEMI_ANNUAL|YEARLY|FIVE_YEARS|HIJRI_YEARLY)$/);
     await recResponse.answerCallbackQuery();
     recurringType = recResponse.match[1] as typeof recurringType;
   }
@@ -175,8 +187,9 @@ export async function addReminderWizard(
       MONTHLY: 'Tiap 1 Bulan',
       QUARTERLY: 'Tiap 3 Bulan',
       SEMI_ANNUAL: 'Tiap 6 Bulan',
-      YEARLY: 'Tiap 1 Tahun',
+      YEARLY: 'Tiap 1 Tahun Masehi',
       FIVE_YEARS: 'Tiap 5 Tahun',
+      HIJRI_YEARLY: 'Tiap 1 Tahun Hijriyah (~354 Hari)',
     };
     successMsg += `🔄 Perulangan: <b>${recLabelMap[recurringType]} (Otomatis)</b>\n`;
   }

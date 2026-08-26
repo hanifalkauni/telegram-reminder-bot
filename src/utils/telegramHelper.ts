@@ -1,6 +1,6 @@
 import { InlineKeyboard } from 'grammy';
 import { ReminderItemRecord } from '../types/database.js';
-import { formatDateID, getDaysDifference, getUrgencyBadge } from './dateHelper.js';
+import { formatDateID, getDaysDifference, getUrgencyBadge, formatHijriDate } from './dateHelper.js';
 import { RECURRING_LABELS } from '../config/constants.js';
 
 /**
@@ -40,10 +40,14 @@ export function formatReminderItemCard(item: ReminderItemRecord): string {
   const urgency = getUrgencyBadge(daysLeft);
   const icon = item.category?.icon || '📌';
   const categoryName = item.category?.name || 'Kategori Umum';
+  const hijriStr = formatHijriDate(item.due_date);
 
   let msg = `<b>${icon} ${escapeHTML(item.title)}</b>\n`;
   msg += `📂 Kategori: <i>${escapeHTML(categoryName)}</i>\n`;
   msg += `📅 Jatuh Tempo: <b>${formatDateID(item.due_date)}</b>\n`;
+  if (hijriStr && (item.category?.code === 'spiritual' || item.recurring_type === 'HIJRI_YEARLY')) {
+    msg += `🌙 Kalender Hijriyah: <b>${hijriStr}</b>\n`;
+  }
   msg += `⏳ Status: ${urgency.badge} <b>${urgency.status}</b>\n`;
   
   if (item.recurring_type && item.recurring_type !== 'NONE') {

@@ -13,7 +13,7 @@ export interface UserRecord {
 
 export type UserAccessState = 'ADMIN' | 'ACTIVE_SUBSCRIBER' | 'FREE_TRIAL' | 'EXPIRED';
 
-export type RecurringType = 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS';
+export type RecurringType = 'NONE' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'YEARLY' | 'FIVE_YEARS' | 'HIJRI_YEARLY';
 
 export interface CategoryRecord {
   id: number;

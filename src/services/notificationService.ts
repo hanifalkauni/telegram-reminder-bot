@@ -6,7 +6,8 @@ import {
   formatDateID,
   getDaysDifference,
   getUrgencyBadge,
-  calculateNextRecurringDate
+  calculateNextRecurringDate,
+  formatHijriDate
 } from '../utils/dateHelper.js';
 import { escapeHTML, generateGoogleCalendarUrl } from '../utils/telegramHelper.js';
 import { RecurringType } from '../types/database.js';
@@ -167,6 +168,8 @@ export async function executeDailyReminderWorker(): Promise<{
       const urgency = getUrgencyBadge(candidate.days_before);
       const nameGreeting = candidate.first_name ? `Halo <b>${escapeHTML(candidate.first_name)}</b>, ` : 'Halo, ';
       const isBirthday = candidate.category_icon === '🎂' || candidate.category_name?.toLowerCase().includes('ulang tahun');
+      const isSpiritual = candidate.category_icon === '🕌' || candidate.recurring_type === 'HIJRI_YEARLY';
+      const hijriStr = formatHijriDate(candidate.due_date);
 
       let caption = '';
       if (isBirthday) {
@@ -189,6 +192,20 @@ export async function executeDailyReminderWorker(): Promise<{
           }
           caption += `\n💡 <i>Siapkan kado, reservasi, atau ucapan spesial dari sekarang!</i>`;
         }
+      } else if (isSpiritual) {
+        caption = `🕌 <b>PENGINGAT IBADAH & HAUL ZAKAT! (${urgency.badge} ${urgency.status})</b>\n\n` +
+          `${nameGreeting}jadwal ibadah/kewajiban berikut akan segera tiba:\n\n` +
+          `🕌 <b>${escapeHTML(candidate.title)}</b>\n` +
+          `📅 Tanggal Masehi: <b>${formatDateID(candidate.due_date)}</b>\n` +
+          (hijriStr ? `🌙 Kalender Hijriyah: <b>${hijriStr}</b>\n` : '');
+        if (candidate.estimated_cost > 0) {
+          const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(candidate.estimated_cost);
+          caption += `💵 Estimasi Dana Kurban/Zakat: <b>${costStr}</b>\n`;
+        }
+        if (candidate.notes) {
+          caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
+        }
+        caption += `\n💡 <i>Semoga Allah mempermudah persiapan dan niat ibadah Anda!</i> ✨`;
       } else {
         caption = `⏰ <b>PENGINGAT JATUH TEMPO! (${urgency.badge} ${urgency.status})</b>\n\n` +
           `${nameGreeting}item berikut mendekati masa kedaluwarsa:\n\n` +

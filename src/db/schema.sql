@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.reminder_items (
     reminder_intervals INT[] DEFAULT '{30, 7, 3, 1, 0}', -- H minus berapa saja notifikasi dikirim
     photo_file_id TEXT, -- ID file telegram jika user upload nota/kartu
     is_recurring BOOLEAN DEFAULT FALSE,
-    recurring_type VARCHAR(20) DEFAULT 'NONE', -- NONE, MONTHLY, QUARTERLY, SEMI_ANNUAL, YEARLY, FIVE_YEARS
+    recurring_type VARCHAR(20) DEFAULT 'NONE', -- NONE, MONTHLY, QUARTERLY, SEMI_ANNUAL, YEARLY, FIVE_YEARS, HIJRI_YEARLY
     is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
