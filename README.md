@@ -6,10 +6,15 @@ TempoGuard adalah platform SaaS bot Telegram untuk memantau dan mengingatkan tan
 - 🛠️ **Servis AC, Kendaraan & Rumah** (Siklus 3 Bulan / 6 Bulan)
 - 💊 **Kesehatan, Obat & Perawatan** (Obat rutin, vaksin hewan, MCU)
 - 💳 **Kartu ATM, Finansial & Tagihan** (Sewa kos, IPL, tagihan kartu kredit)
+- 🕌 **Ibadah, Zakat & Haul** (Haul Zakat Maal, qadha puasa, kurban)
+- 👔 **Karier, Pajak SPT & Kontrak Kerja** (Batas lapor SPT, probation, SKCK)
+- 🎓 **Pendidikan, SPP & UKT Kuliah** (SPP bulanan, uang semester)
 - 💻 **Garansi Elektronik & Gadget** (Laptop, HP, kulkas, AC, dsb)
 - 📄 **Paspor, Visa & Lisensi Profesi** (STR, KTA, lisensi kerja, sertifikasi)
+- ✈️ **Travel, Visa & Poin/Miles** (Masa berlaku visa, miles penerbangan, tiket)
 - 🌐 **Domain, Hosting & Subscription** (Cloud, domain, Netflix, dsb)
 - 🏠 **Sewa Properti & Tagihan Berkala**
+- 🪴 **Tanaman & Perawatan Kebun** (Jadwal pemupukan & repotting)
 - 🐾 **Perawatan Hewan Peliharaan** (Obat cacing, tetes kutu, vaksin)
 
 Dibangun dengan arsitektur **Clean Code**, **TypeScript**, **grammY Framework**, **Supabase PostgreSQL**, dan **Vercel Serverless Functions & Cron**.
@@ -19,6 +24,9 @@ Dibangun dengan arsitektur **Clean Code**, **TypeScript**, **grammY Framework**,
 ## 🌟 Fitur Utama
 
 - 🎁 **Model Bisnis SaaS Freemium**: Free Trial hingga 2 item aktif; akses tanpa batas (*Unlimited*) untuk Pro Subscriber.
+- 💵 **Pencatatan Estimasi Biaya (*Budget Tracking*)**: Input perkiraan dana (misal Pajak STNK Rp 2,5jt) untuk membantu persiapan cashflow saat jatuh tempo.
+- 📅 **1-Klik Simpan ke Google Calendar**: Link direct sync langsung ke Google Calendar di setiap notifikasi dan detail item.
+- 📊 **Agenda Bulanan & Rekap Dana (`/agenda` / `/upcoming`)**: Melihat seluruh agenda jatuh tempo bulan berjalan beserta total estimasi pengeluaran.
 - 🔄 **Siklus Perulangan Fleksibel (*Flexible Recurrence*)**: Mendukung perulangan otomatis Bulanan, 3 Bulanan, 6 Bulanan, 1 Tahunan, dan 5 Tahunan.
 - ⚡ **Tombol Quick Renew 1-Klik**: Perpanjang item secara instan `[+1 Bln]`, `[+3 Bln]`, `[+6 Bln]`, atau `[+1 Thn]` langsung dari Telegram.
 - 🤖 **Arsitektur Dual Bot**:

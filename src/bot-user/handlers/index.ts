@@ -6,7 +6,8 @@ import {
   deleteReminder,
   renewReminderDate,
   renewReminderByMonths,
-  snoozeReminder
+  snoozeReminder,
+  getMonthlyAgenda
 } from '../../services/reminderService.js';
 import {
   getActivePackages,
@@ -15,7 +16,13 @@ import {
 import { supabase } from '../../db/supabase.js';
 import { env } from '../../config/env.js';
 import { formatDateID, getDaysDifference } from '../../utils/dateHelper.js';
-import { escapeHTML, formatReminderItemCard, getMainMenuKeyboard } from '../../utils/telegramHelper.js';
+import {
+  escapeHTML,
+  formatReminderItemCard,
+  getMainMenuKeyboard,
+  generateGoogleCalendarUrl
+} from '../../utils/telegramHelper.js';
+import { ReminderItemRecord } from '../../types/database.js';
 
 export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   // 1. Menu Navigations
@@ -60,6 +67,53 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
   });
 
+  // Monthly Agenda Handler
+  bot.callbackQuery('action:monthly_agenda', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const agenda = await getMonthlyAgenda(access.user.id);
+
+    let text = `📅 <b>Agenda & Jadwal Jatuh Tempo: ${agenda.monthName} ${agenda.yearNum}</b>\n\n`;
+
+    if (agenda.items.length === 0) {
+      text += `🎉 <i>Tidak ada item yang jatuh tempo pada bulan ${agenda.monthName} ${agenda.yearNum}!</i>\n\n` +
+        `Semua urusan Anda bulan ini aman terkendali.`;
+      await ctx.reply(text, {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().text('➕ Tambah Reminder Baru', 'action:add_reminder'),
+      });
+      return;
+    }
+
+    const keyboard = new InlineKeyboard();
+
+    agenda.items.forEach((item: ReminderItemRecord, index: number) => {
+      const daysLeft = getDaysDifference(item.due_date);
+      const icon = item.category?.icon || '📌';
+      text += `<b>${index + 1}. ${icon} ${escapeHTML(item.title)}</b>\n`;
+      text += `   📅 ${formatDateID(item.due_date)} (${daysLeft >= 0 ? `${daysLeft} hari lagi` : 'Lewat'})\n`;
+      if (item.estimated_cost && Number(item.estimated_cost) > 0) {
+        const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(item.estimated_cost));
+        text += `   💵 Biaya: <b>${costStr}</b>\n`;
+      }
+      text += `\n`;
+      keyboard.text(`${index + 1}. ${item.title.substring(0, 16)}`, `action:view:${item.id}`).row();
+    });
+
+    if (agenda.totalEstimatedCost > 0) {
+      const totalCostFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(agenda.totalEstimatedCost);
+      text += `💰 <b>Total Estimasi Dana Bulan Ini:</b>\n` +
+        `👉 <b>${totalCostFormatted}</b>\n\n`;
+    }
+
+    keyboard.text('➕ Tambah Reminder', 'action:add_reminder');
+
+    await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
+  });
+
   bot.callbackQuery('action:profile', async (ctx) => {
     await ctx.answerCallbackQuery();
     const from = ctx.from;
@@ -96,7 +150,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   bot.callbackQuery('action:help', async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.reply(
-      '📖 <b>Bantuan & Panduan:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /subscribe untuk upgrade kuota',
+      '📖 <b>Bantuan & Panduan:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /agenda untuk rekap bulanan\n• Ketik /subscribe untuk upgrade kuota',
       { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('➕ Tambah Item', 'action:add_reminder') }
     );
   });
@@ -180,7 +234,11 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     }
 
     const card = formatReminderItemCard(item);
+    const gcalUrl = generateGoogleCalendarUrl(item.title, item.due_date, item.notes);
+
     const keyboard = new InlineKeyboard()
+      .url('📅 Simpan ke Google Calendar', gcalUrl)
+      .row()
       .text('➕ +1 Bln', `action:renew_months:${item.id}:1`)
       .text('➕ +3 Bln', `action:renew_months:${item.id}:3`)
       .text('➕ +6 Bln', `action:renew_months:${item.id}:6`)

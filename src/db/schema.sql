@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS public.reminder_items (
     title VARCHAR(255) NOT NULL,
     notes TEXT,
     due_date DATE NOT NULL,
+    estimated_cost NUMERIC(14, 2) DEFAULT 0, -- Estimasi biaya / dana yang perlu disiapkan (Rp)
     reminder_intervals INT[] DEFAULT '{30, 7, 3, 1, 0}', -- H minus berapa saja notifikasi dikirim
     photo_file_id TEXT, -- ID file telegram jika user upload nota/kartu
     is_recurring BOOLEAN DEFAULT FALSE,
@@ -114,10 +115,15 @@ VALUES
     ('maintenance', 'Servis AC, Kendaraan & Rumah', '🛠️', '{14, 7, 3, 1, 0}'),
     ('health', 'Kesehatan, Obat & Perawatan', '💊', '{14, 7, 3, 1, 0}'),
     ('financial', 'Kartu ATM, Finansial & Tagihan', '💳', '{14, 7, 3, 1, 0}'),
+    ('spiritual', 'Ibadah, Zakat & Haul', '🕌', '{30, 14, 7, 3, 0}'),
+    ('career', 'Karier, Pajak SPT & Kontrak', '👔', '{30, 14, 7, 3, 1, 0}'),
+    ('education', 'Pendidikan, SPP & UKT', '🎓', '{30, 14, 7, 3, 1, 0}'),
     ('electronics', 'Garansi Elektronik & Gadget', '💻', '{30, 7, 3, 1, 0}'),
     ('document', 'Paspor, Visa & Lisensi Legal', '📄', '{60, 30, 14, 7, 0}'),
+    ('travel', 'Travel, Visa & Poin/Miles', '✈️', '{14, 7, 3, 1, 0}'),
     ('digital', 'Domain, Hosting & Subscription', '🌐', '{14, 7, 3, 1, 0}'),
     ('property', 'Sewa Rumah, Kos & Properti', '🏠', '{30, 14, 7, 3, 1, 0}'),
+    ('plant', 'Tanaman & Perawatan Kebun', '🪴', '{7, 3, 1, 0}'),
     ('pet', 'Perawatan Hewan Peliharaan', '🐾', '{7, 3, 1, 0}'),
     ('custom', 'Lainnya / Kebutuhan Pribadi', '📌', '{30, 7, 3, 1, 0}')
 ON CONFLICT (code) DO NOTHING;

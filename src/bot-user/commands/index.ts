@@ -1,11 +1,12 @@
 import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import { UserBotContext } from '../conversations/addReminderWizard.js';
 import { getOrCreateUser, checkUserAccess, promoteToAdmin } from '../../services/accessControl.js';
-import { getUserReminders } from '../../services/reminderService.js';
+import { getUserReminders, getMonthlyAgenda } from '../../services/reminderService.js';
 import { getActivePackages, getActivePaymentMethods, redeemCode } from '../../services/subscriptionService.js';
 import { checkAndConsumeContactQuota } from '../../middlewares/rateLimiter.js';
 import { formatDateID, getDaysDifference, getUrgencyBadge } from '../../utils/dateHelper.js';
 import { escapeHTML, getMainMenuKeyboard } from '../../utils/telegramHelper.js';
+import { ReminderItemRecord } from '../../types/database.js';
 import { supabase } from '../../db/supabase.js';
 import { env } from '../../config/env.js';
 
@@ -52,17 +53,68 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       `• /start - Menampilkan menu utama\n` +
       `• /add - Menambah pengingat baru (Wizard interaktif)\n` +
       `• /list atau /reminders - Melihat seluruh item pengingat aktif\n` +
+      `• /agenda atau /upcoming - Rekap agenda & estimasi biaya bulan ini\n` +
       `• /profile atau /status - Cek status langganan & sisa kuota\n` +
       `• /subscribe - Berlangganan paket Pro (Unlimited item)\n` +
-      `• /redeem <code> - Aktivasi kode voucher voucher\n` +
+      `• /redeem <code> - Aktivasi kode voucher\n` +
       `• /export - Download seluruh data reminder Anda (CSV)\n` +
       `• /contact <pesan> - Kirim pesan bantuan ke Admin (Maks 3x/hari)\n\n` +
       `💡 <i>Notifikasi akan otomatis dikirimkan ke chat ini setiap pukul 07:00 WIB saat item mendekati masa jatuh tempo.</i>`;
 
     await ctx.reply(helpText, {
       parse_mode: 'HTML',
-      reply_markup: new InlineKeyboard().text('➕ Tambah Reminder', 'action:add_reminder').text('📋 Lihat Daftar', 'action:list_reminders'),
+      reply_markup: new InlineKeyboard()
+        .text('➕ Tambah Reminder', 'action:add_reminder')
+        .text('📅 Agenda Bulan Ini', 'action:monthly_agenda')
+        .row()
+        .text('📋 Lihat Daftar', 'action:list_reminders'),
     });
+  });
+
+  // 3. /agenda & /upcoming (Monthly Agenda & Budget Recap)
+  bot.command(['agenda', 'upcoming'], async (ctx) => {
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const agenda = await getMonthlyAgenda(access.user.id);
+
+    let text = `📅 <b>Agenda & Jadwal Jatuh Tempo: ${agenda.monthName} ${agenda.yearNum}</b>\n\n`;
+
+    if (agenda.items.length === 0) {
+      text += `🎉 <i>Tidak ada item yang jatuh tempo pada bulan ${agenda.monthName} ${agenda.yearNum}!</i>\n\n` +
+        `Semua urusan Anda bulan ini aman terkendali.`;
+      await ctx.reply(text, {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().text('➕ Tambah Reminder Baru', 'action:add_reminder'),
+      });
+      return;
+    }
+
+    const keyboard = new InlineKeyboard();
+
+    agenda.items.forEach((item: ReminderItemRecord, index: number) => {
+      const daysLeft = getDaysDifference(item.due_date);
+      const icon = item.category?.icon || '📌';
+      text += `<b>${index + 1}. ${icon} ${escapeHTML(item.title)}</b>\n`;
+      text += `   📅 ${formatDateID(item.due_date)} (${daysLeft >= 0 ? `${daysLeft} hari lagi` : 'Lewat'})\n`;
+      if (item.estimated_cost && Number(item.estimated_cost) > 0) {
+        const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(item.estimated_cost));
+        text += `   💵 Biaya: <b>${costStr}</b>\n`;
+      }
+      text += `\n`;
+      keyboard.text(`${index + 1}. ${item.title.substring(0, 16)}`, `action:view:${item.id}`).row();
+    });
+
+    if (agenda.totalEstimatedCost > 0) {
+      const totalCostFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(agenda.totalEstimatedCost);
+      text += `💰 <b>Total Estimasi Dana yang Perlu Disiapkan Bulan Ini:</b>\n` +
+        `👉 <b>${totalCostFormatted}</b>\n\n`;
+    }
+
+    keyboard.text('➕ Tambah Reminder', 'action:add_reminder');
+
+    await ctx.reply(text, { parse_mode: 'HTML', reply_markup: keyboard });
   });
 
   // 3. /profile & /status

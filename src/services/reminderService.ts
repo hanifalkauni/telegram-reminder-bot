@@ -8,6 +8,7 @@ export interface CreateReminderDTO {
   title: string;
   notes?: string;
   dueDate: string; // YYYY-MM-DD
+  estimatedCost?: number;
   reminderIntervals?: number[];
   photoFileId?: string;
   isRecurring?: boolean;
@@ -43,6 +44,7 @@ export async function createReminder(dto: CreateReminderDTO): Promise<ReminderIt
       title: dto.title,
       notes: dto.notes || null,
       due_date: dto.dueDate,
+      estimated_cost: dto.estimatedCost || 0,
       reminder_intervals: dto.reminderIntervals || [30, 7, 3, 1, 0],
       photo_file_id: dto.photoFileId || null,
       is_recurring: isRecurring,
@@ -166,4 +168,57 @@ export async function snoozeReminder(reminderId: number, userId: number, daysToA
 
   if (error || !data) return null;
   return data as ReminderItemRecord;
+}
+
+/**
+ * Mengambil agenda reminder untuk bulan tertentu (Monthly Agenda) beserta total estimasi biayanya
+ */
+export async function getMonthlyAgenda(
+  userId: number,
+  year?: number,
+  month?: number
+): Promise<{ items: ReminderItemRecord[]; totalEstimatedCost: number; monthName: string; yearNum: number }> {
+  const now = new Date();
+  const targetYear = year || now.getFullYear();
+  const targetMonth = month !== undefined ? month : now.getMonth(); // 0-indexed
+
+  // Format awal dan akhir bulan (YYYY-MM-DD)
+  const startDay = new Date(targetYear, targetMonth, 1);
+  const endDay = new Date(targetYear, targetMonth + 1, 0);
+
+  const startDateStr = startDay.toISOString().split('T')[0];
+  const endDateStr = endDay.toISOString().split('T')[0];
+
+  const MONTHS = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+  ];
+
+  const { data, error } = await supabase
+    .from('reminder_items')
+    .select('*, category:categories(*)')
+    .eq('user_id', userId)
+    .eq('is_completed', false)
+    .gte('due_date', startDateStr)
+    .lte('due_date', endDateStr)
+    .order('due_date', { ascending: true });
+
+  if (error || !data) {
+    return {
+      items: [],
+      totalEstimatedCost: 0,
+      monthName: MONTHS[targetMonth],
+      yearNum: targetYear,
+    };
+  }
+
+  const items = data as ReminderItemRecord[];
+  const totalEstimatedCost = items.reduce((acc, item) => acc + (Number(item.estimated_cost) || 0), 0);
+
+  return {
+    items,
+    totalEstimatedCost,
+    monthName: MONTHS[targetMonth],
+    yearNum: targetYear,
+  };
 }

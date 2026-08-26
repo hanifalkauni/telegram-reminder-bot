@@ -8,7 +8,7 @@ import {
   getUrgencyBadge,
   calculateNextRecurringDate
 } from '../utils/dateHelper.js';
-import { escapeHTML } from '../utils/telegramHelper.js';
+import { escapeHTML, generateGoogleCalendarUrl } from '../utils/telegramHelper.js';
 import { RecurringType } from '../types/database.js';
 
 interface DailyReminderCandidate {
@@ -16,6 +16,7 @@ interface DailyReminderCandidate {
   title: string;
   notes: string | null;
   due_date: string;
+  estimated_cost: number;
   photo_file_id: string | null;
   is_recurring: boolean;
   recurring_type: RecurringType;
@@ -55,6 +56,7 @@ export async function executeDailyReminderWorker(): Promise<{
       title,
       notes,
       due_date,
+      estimated_cost,
       photo_file_id,
       is_recurring,
       recurring_type,
@@ -136,6 +138,7 @@ export async function executeDailyReminderWorker(): Promise<{
             title: item.title,
             notes: item.notes,
             due_date: item.due_date,
+            estimated_cost: Number(item.estimated_cost) || 0,
             photo_file_id: item.photo_file_id,
             is_recurring: item.is_recurring || false,
             recurring_type: item.recurring_type || 'NONE',
@@ -177,6 +180,10 @@ export async function executeDailyReminderWorker(): Promise<{
             `${nameGreeting}hari ulang tahun/spesial berikut akan tiba:\n` +
             `🎂 <b>${escapeHTML(candidate.title)}</b>\n` +
             `📅 Tanggal: <b>${formatDateID(candidate.due_date)}</b>\n`;
+          if (candidate.estimated_cost > 0) {
+            const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(candidate.estimated_cost);
+            caption += `💵 Estimasi Dana Kado/Acara: <b>${costStr}</b>\n`;
+          }
           if (candidate.notes) {
             caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
           }
@@ -188,14 +195,21 @@ export async function executeDailyReminderWorker(): Promise<{
           `<b>${candidate.category_icon} ${escapeHTML(candidate.title)}</b>\n` +
           `📂 Kategori: <i>${escapeHTML(candidate.category_name || '')}</i>\n` +
           `📅 Tanggal Jatuh Tempo: <b>${formatDateID(candidate.due_date)}</b>\n`;
+        if (candidate.estimated_cost > 0) {
+          const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(candidate.estimated_cost);
+          caption += `💵 Estimasi Biaya yang Disiapkan: <b>${costStr}</b>\n`;
+        }
         if (candidate.notes) {
           caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
         }
         caption += `\n💡 <i>Segera lakukan perpanjangan, servis atau pembayaran sebelum batas waktu berakhir!</i>`;
       }
 
+      const gcalUrl = generateGoogleCalendarUrl(candidate.title, candidate.due_date, candidate.notes);
       const keyboard = new InlineKeyboard()
+        .url('📅 Google Calendar', gcalUrl)
         .text('🔄 Perpanjang (+1 Thn)', `action:renew_months:${candidate.reminder_id}:12`)
+        .row()
         .text('📋 Lihat Daftar', 'action:list_reminders');
 
       if (candidate.photo_file_id) {

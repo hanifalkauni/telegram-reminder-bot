@@ -32,6 +32,7 @@ export interface ReminderItemRecord {
   title: string;
   notes: string | null;
   due_date: string; // YYYY-MM-DD
+  estimated_cost: number;
   reminder_intervals: number[];
   photo_file_id: string | null;
   is_recurring: boolean;
