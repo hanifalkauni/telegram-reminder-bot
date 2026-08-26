@@ -86,6 +86,37 @@ function padZero(num: number): string {
 }
 
 /**
+ * Menghitung tanggal perulangan tahunan berikutnya (Next Annual Occurrence)
+ * Sangat berguna untuk Ulang Tahun & Anniversary agar jika user input tahun lahir (misal 1995),
+ * bot otomatis mengarahkan ke tanggal ulang tahun terdekat (tahun ini atau tahun depan).
+ */
+export function getNextUpcomingOccurrence(dateStr: string): string {
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const currentYear = today.getFullYear();
+  let target = new Date(currentYear, month, day);
+  target.setHours(0, 0, 0, 0);
+
+  // Jika tanggal di tahun ini sudah lewat, jadwalkan untuk tahun depan
+  if (target < today) {
+    target = new Date(currentYear + 1, month, day);
+  }
+
+  const targetYear = target.getFullYear();
+  const targetMonth = padZero(target.getMonth() + 1);
+  const targetDay = padZero(target.getDate());
+
+  return `${targetYear}-${targetMonth}-${targetDay}`;
+}
+
+/**
  * Format visual status urgensi
  */
 export function getUrgencyBadge(daysLeft: number): { badge: string; status: string } {

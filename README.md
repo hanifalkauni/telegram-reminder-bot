@@ -1,6 +1,7 @@
 # ⏰ TempoGuard: Telegram Reminder SaaS Bot
 
 TempoGuard adalah platform SaaS bot Telegram untuk memantau dan mengingatkan tanggal jatuh tempo / kedaluwarsa dokumen dan barang penting secara otomatis, seperti:
+- 🎂 **Ulang Tahun & Anniversary (Perulangan Tahunan Otomatis)**
 - 💻 **Garansi Elektronik & Gadget**
 - 🚗 **Pajak STNK & SIM Kendaraan**
 - 📄 **Paspor, Asuransi & Dokumen Legalitas**

@@ -26,6 +26,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     const name = from.first_name || 'Teman';
     const welcomeText = `👋 <b>Selamat datang di TempoGuard, ${escapeHTML(name)}!</b>\n\n` +
       `Platform asisten pengingat tanggal jatuh tempo otomatis untuk:\n` +
+      `• 🎂 <b>Ulang Tahun & Anniversary (Perulangan Otomatis)</b>\n` +
       `• 💻 <b>Garansi Gadget & Elektronik</b>\n` +
       `• 🚗 <b>Pajak STNK & SIM Kendaraan</b>\n` +
       `• 📄 <b>Paspor & Dokumen Legalitas</b>\n` +

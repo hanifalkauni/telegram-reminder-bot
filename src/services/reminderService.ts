@@ -9,6 +9,7 @@ export interface CreateReminderDTO {
   dueDate: string; // YYYY-MM-DD
   reminderIntervals?: number[];
   photoFileId?: string;
+  isRecurring?: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export async function createReminder(dto: CreateReminderDTO): Promise<ReminderIt
       due_date: dto.dueDate,
       reminder_intervals: dto.reminderIntervals || [30, 7, 3, 1, 0],
       photo_file_id: dto.photoFileId || null,
+      is_recurring: dto.isRecurring || false,
       is_completed: false,
     })
     .select('*, category:categories(*)')

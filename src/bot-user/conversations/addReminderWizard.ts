@@ -2,7 +2,7 @@ import { Conversation, ConversationFlavor } from '@grammyjs/conversations';
 import { Context, InlineKeyboard } from 'grammy';
 import { checkUserAccess } from '../../services/accessControl.js';
 import { getActiveCategories, createReminder } from '../../services/reminderService.js';
-import { parseDateInput, formatDateID } from '../../utils/dateHelper.js';
+import { parseDateInput, formatDateID, getNextUpcomingOccurrence } from '../../utils/dateHelper.js';
 import { escapeHTML } from '../../utils/telegramHelper.js';
 
 export type UserBotContext = Context & ConversationFlavor;
@@ -51,28 +51,32 @@ export async function addReminderWizard(
 
   const categoryId = parseInt(catResponse.callbackQuery.data.split(':')[1], 10);
   const selectedCat = categories.find((c) => c.id === categoryId);
+  const isBirthday = selectedCat?.code === 'birthday';
 
   // 3. Input Judul / Nama Item
-  await ctx.reply(
-    `📌 <b>Langkah 2 dari 4: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen (misal: <i>"Garansi Asus ROG Zephyrus"</i> atau <i>"Pajak STNK Honda Vario 160"</i>):`,
-    { parse_mode: 'HTML' }
-  );
+  const titlePrompt = isBirthday
+    ? `🎂 <b>Langkah 2 dari 4: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`
+    : `📌 <b>Langkah 2 dari 4: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen (misal: <i>"Garansi Asus ROG"</i> atau <i>"Pajak STNK Honda Vario"</i>):`;
+
+  await ctx.reply(titlePrompt, { parse_mode: 'HTML' });
 
   const titleMsg = await conversation.waitFor('message:text');
   const title = titleMsg.message.text.trim();
 
   // 4. Input Tanggal Jatuh Tempo
-  await ctx.reply(
-    `📅 <b>Langkah 3 dari 4: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`,
-    { parse_mode: 'HTML' }
-  );
+  const datePrompt = isBirthday
+    ? `📅 <b>Langkah 3 dari 4: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
+    : `📅 <b>Langkah 3 dari 4: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
+
+  await ctx.reply(datePrompt, { parse_mode: 'HTML' });
 
   let validDateStr: string | null = null;
   while (!validDateStr) {
     const dateMsg = await conversation.waitFor('message:text');
     const parsed = parseDateInput(dateMsg.message.text);
     if (parsed) {
-      validDateStr = parsed;
+      // Jika kategori ulang tahun, hitung tanggal kejadian terdekat (tahun ini / tahun depan)
+      validDateStr = isBirthday ? getNextUpcomingOccurrence(parsed) : parsed;
     } else {
       await ctx.reply(
         '⚠️ <b>Format tanggal tidak valid!</b>\nMohon ketikkan format yang benar, contoh: <code>2026-12-31</code> atau <code>31/12/2026</code>:',
@@ -83,10 +87,11 @@ export async function addReminderWizard(
 
   // 5. Catatan Tambahan (Opsional) atau Foto
   const skipKeyboard = new InlineKeyboard().text('⏩ Lewati Catatan', 'wizard_skip_notes');
-  await ctx.reply(
-    `📝 <b>Langkah 4 dari 4: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`,
-    { parse_mode: 'HTML', reply_markup: skipKeyboard }
-  );
+  const notesPrompt = isBirthday
+    ? `🎁 <b>Langkah 4 dari 4: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
+    : `📝 <b>Langkah 4 dari 4: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
+
+  await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipKeyboard });
 
   let notes: string | undefined;
   let photoFileId: string | undefined;
@@ -115,17 +120,22 @@ export async function addReminderWizard(
       dueDate: validDateStr!,
       reminderIntervals: selectedCat?.default_reminder_days || [30, 7, 3, 1, 0],
       photoFileId,
+      isRecurring: isBirthday,
     })
   );
 
   let successMsg = `🎉 <b>Item Pengingat Berhasil Disimpan!</b>\n\n`;
   successMsg += `<b>${selectedCat?.icon} ${escapeHTML(createdItem.title)}</b>\n`;
   successMsg += `📂 Kategori: <i>${escapeHTML(selectedCat?.name || '')}</i>\n`;
-  successMsg += `📅 Tanggal Jatuh Tempo: <b>${formatDateID(createdItem.due_date)}</b>\n`;
+  successMsg += `📅 Tanggal: <b>${formatDateID(createdItem.due_date)}</b>\n`;
   if (createdItem.notes) {
     successMsg += `📝 Catatan: <code>${escapeHTML(createdItem.notes)}</code>\n`;
   }
-  successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda pada H-30, H-7, H-3, H-1, dan hari H!</i>`;
+  if (isBirthday) {
+    successMsg += `\n🎂 <i>Pengingat ini berulang otomatis setiap tahun! Bot akan mengingatkan pada H-14, H-7, H-3, H-1, dan Hari H.</i>`;
+  } else {
+    successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda pada H-30, H-7, H-3, H-1, dan hari H!</i>`;
+  }
 
   const doneKeyboard = new InlineKeyboard()
     .text('📋 Lihat Semua Reminder', 'action:list_reminders')

@@ -32,6 +32,7 @@ export interface ReminderItemRecord {
   due_date: string; // YYYY-MM-DD
   reminder_intervals: number[];
   photo_file_id: string | null;
+  is_recurring: boolean;
   is_completed: boolean;
   created_at: string;
   updated_at: string;

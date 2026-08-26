@@ -12,6 +12,7 @@ export const APP_CONSTANTS = {
 };
 
 export const CATEGORY_ICONS: Record<string, string> = {
+  birthday: '🎂',
   electronics: '💻',
   vehicle: '🚗',
   document: '📄',

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.reminder_items (
     due_date DATE NOT NULL,
     reminder_intervals INT[] DEFAULT '{30, 7, 3, 1, 0}', -- H minus berapa saja notifikasi dikirim
     photo_file_id TEXT, -- ID file telegram jika user upload nota/kartu
+    is_recurring BOOLEAN DEFAULT FALSE, -- Otomatis berulang tahunan untuk Ulang Tahun & Anniversary
     is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -107,6 +108,7 @@ CREATE INDEX IF NOT EXISTS idx_confirmation_codes_code ON public.confirmation_co
 -- Seed Kategori Preset
 INSERT INTO public.categories (code, name, icon, default_reminder_days)
 VALUES 
+    ('birthday', 'Ulang Tahun & Anniversary', '🎂', '{14, 7, 3, 1, 0}'),
     ('electronics', 'Garansi Elektronik / Gadget', '💻', '{30, 7, 3, 1, 0}'),
     ('vehicle', 'Pajak STNK & SIM Kendaraan', '🚗', '{30, 14, 7, 3, 1, 0}'),
     ('document', 'Paspor & Dokumen Legalitas', '📄', '{60, 30, 14, 7, 0}'),

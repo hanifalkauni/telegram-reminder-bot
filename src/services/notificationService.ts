@@ -11,6 +11,7 @@ interface DailyReminderCandidate {
   notes: string | null;
   due_date: string;
   photo_file_id: string | null;
+  is_recurring: boolean;
   user_id: number;
   telegram_id: number;
   first_name: string | null;
@@ -48,6 +49,7 @@ export async function executeDailyReminderWorker(): Promise<{
       notes,
       due_date,
       photo_file_id,
+      is_recurring,
       reminder_intervals,
       user_id,
       users!inner (
@@ -89,7 +91,6 @@ export async function executeDailyReminderWorker(): Promise<{
       };
 
       // Validasi hak akses pengiriman notifikasi:
-      // Harus Admin ATAU Active Subscriber ATAU Free Trial dengan item <= 2
       let hasAccess = false;
       if (user.is_admin) {
         hasAccess = true;
@@ -111,7 +112,7 @@ export async function executeDailyReminderWorker(): Promise<{
       }
 
       if (hasAccess) {
-        // Cek Idempotency: apakah sudah pernah terkirim hari ini untuk interval ini?
+        // Cek Idempotency
         const { data: existingLog } = await supabase
           .from('reminder_delivery_logs')
           .select('id')
@@ -128,6 +129,7 @@ export async function executeDailyReminderWorker(): Promise<{
             notes: item.notes,
             due_date: item.due_date,
             photo_file_id: item.photo_file_id,
+            is_recurring: item.is_recurring || false,
             user_id: user.id,
             telegram_id: user.telegram_id,
             first_name: user.first_name,
@@ -152,16 +154,36 @@ export async function executeDailyReminderWorker(): Promise<{
     try {
       const urgency = getUrgencyBadge(candidate.days_before);
       const nameGreeting = candidate.first_name ? `Halo <b>${escapeHTML(candidate.first_name)}</b>, ` : 'Halo, ';
-      
-      let caption = `⏰ <b>PENGINGAT JATUH TEMPO! (${urgency.badge} ${urgency.status})</b>\n\n`;
-      caption += `${nameGreeting}item berikut mendekati masa kedaluwarsa:\n\n`;
-      caption += `<b>${candidate.category_icon} ${escapeHTML(candidate.title)}</b>\n`;
-      caption += `📂 Kategori: <i>${escapeHTML(candidate.category_name || '')}</i>\n`;
-      caption += `📅 Tanggal Jatuh Tempo: <b>${formatDateID(candidate.due_date)}</b>\n`;
-      if (candidate.notes) {
-        caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
+      const isBirthday = candidate.category_icon === '🎂' || candidate.category_name?.toLowerCase().includes('ulang tahun');
+
+      let caption = '';
+      if (isBirthday) {
+        if (candidate.days_before === 0) {
+          caption = `🎉 <b>HARI INI ULANG TAHUN SPESIAL! 🎂</b>\n\n` +
+            `${nameGreeting}hari ini adalah hari spesial untuk:\n` +
+            `🎂 <b>${escapeHTML(candidate.title)}</b>!\n\n` +
+            `🎁 <i>Jangan lupa beri ucapan selamat terbaik atau kejutan spesial hari ini!</i> ✨`;
+        } else {
+          caption = `🎂 <b>PENGINGAT HARI SPESIAL / ULANG TAHUN! (${urgency.badge} ${urgency.status})</b>\n\n` +
+            `${nameGreeting}hari ulang tahun/spesial berikut akan tiba:\n` +
+            `🎂 <b>${escapeHTML(candidate.title)}</b>\n` +
+            `📅 Tanggal: <b>${formatDateID(candidate.due_date)}</b>\n`;
+          if (candidate.notes) {
+            caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
+          }
+          caption += `\n💡 <i>Siapkan kado, reservasi, atau ucapan spesial dari sekarang!</i>`;
+        }
+      } else {
+        caption = `⏰ <b>PENGINGAT JATUH TEMPO! (${urgency.badge} ${urgency.status})</b>\n\n` +
+          `${nameGreeting}item berikut mendekati masa kedaluwarsa:\n\n` +
+          `<b>${candidate.category_icon} ${escapeHTML(candidate.title)}</b>\n` +
+          `📂 Kategori: <i>${escapeHTML(candidate.category_name || '')}</i>\n` +
+          `📅 Tanggal Jatuh Tempo: <b>${formatDateID(candidate.due_date)}</b>\n`;
+        if (candidate.notes) {
+          caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
+        }
+        caption += `\n💡 <i>Segera lakukan perpanjangan atau klaim sebelum batas waktu berakhir!</i>`;
       }
-      caption += `\n💡 <i>Segera lakukan perpanjangan atau klaim sebelum batas waktu berakhir!</i>`;
 
       const keyboard = new InlineKeyboard()
         .text('🔄 Perpanjang Item (+1 Thn)', `action:renew:${candidate.reminder_id}`)
@@ -188,14 +210,27 @@ export async function executeDailyReminderWorker(): Promise<{
         status: 'SENT',
       });
 
+      // Jika item recurring (ulang tahun) dan sudah Hari H (days_before === 0), majukan otomatis ke tahun depan!
+      if (candidate.is_recurring && candidate.days_before === 0) {
+        const nextYearDate = new Date(candidate.due_date);
+        nextYearDate.setFullYear(nextYearDate.getFullYear() + 1);
+        const nextYearStr = nextYearDate.toISOString().split('T')[0];
+
+        await supabase
+          .from('reminder_items')
+          .update({
+            due_date: nextYearStr,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', candidate.reminder_id);
+      }
+
       stats.sent++;
-      // Delay 40ms to stay well under 30 msgs/sec
       await sleep(40);
     } catch (err: unknown) {
       console.error(`Failed to send reminder to ${candidate.telegram_id}:`, err);
       stats.failed++;
 
-      // Log failure
       await supabase.from('reminder_delivery_logs').insert({
         reminder_item_id: candidate.reminder_id,
         days_before: candidate.days_before,
