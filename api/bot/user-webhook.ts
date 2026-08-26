@@ -1,4 +1,5 @@
 import { webhookCallback } from 'grammy';
+import type { IncomingMessage, ServerResponse } from 'http';
 import { userBot } from '../../src/bot-user/index.js';
 import { env } from '../../src/config/env.js';
 
@@ -8,19 +9,24 @@ export const config = {
   },
 };
 
-const handleUpdate = webhookCallback(userBot, 'std/http', {
+const handleUpdate = webhookCallback(userBot, 'http', {
   secretToken: env.TELEGRAM_SECRET_TOKEN,
 });
 
-export default async function handler(req: Request): Promise<Response> {
+export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+    res.statusCode = 405;
+    res.end('Method Not Allowed');
+    return;
   }
 
   try {
-    return await handleUpdate(req);
+    await handleUpdate(req, res);
   } catch (err) {
     console.error('Error handling user webhook update:', err);
-    return new Response('Internal Server Error', { status: 500 });
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.end('Internal Server Error');
+    }
   }
 }
