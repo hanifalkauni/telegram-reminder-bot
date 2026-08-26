@@ -43,7 +43,7 @@ export function registerAdminHandlers(bot: Bot<Context>): void {
     try {
       const userBot = new Bot(env.BOT_TOKEN_USER);
       const userSuccessMsg = `🎉 <b>PEMBAYARAN ANDA TELAH DISETUJUI!</b>\n\n` +
-        `Selamat! Akun TempoGuard Pro Anda kini telah <b>Aktif</b>.\n` +
+        `Selamat! Akun Ingatin Pro Anda kini telah <b>Aktif</b>.\n` +
         `⏳ <b>Masa Aktif:</b> <b>${durationText}</b>\n\n` +
         `Sekarang Anda dapat menyimpan pengingat garansi, STNK, SIM, dan dokumen lainnya tanpa batas.\n\n` +
         `Ketik /add untuk mulai mencatat pengingat baru!`;
@@ -99,7 +99,7 @@ export function registerAdminHandlers(bot: Bot<Context>): void {
     const rawArgs = caption.replace('/add_qris', '').trim();
     const parts = rawArgs.split('|').map((s) => s.trim());
     const name = parts[0] || 'QRIS All Payment';
-    const accountName = parts[1] || 'TempoGuard Official';
+    const accountName = parts[1] || 'Ingatin Official';
 
     const photos = ctx.message.photo;
     const highestRes = photos[photos.length - 1];

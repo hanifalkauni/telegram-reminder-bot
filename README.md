@@ -1,4 +1,4 @@
-# ⏰ TempoGuard: Telegram Reminder SaaS Platform
+# ⏰ Ingatin: Telegram Reminder SaaS Platform
 
 <div align="center">
 
@@ -22,9 +22,9 @@
 
 ---
 
-## 📖 Tentang TempoGuard
+## 📖 Tentang Ingatin
 
-**TempoGuard** adalah solusi SaaS (*Software-as-a-Service*) modern yang dirancang untuk mencegah kelalaian fatal akibat lupa tanggal jatuh tempo (seperti garansi gadget hangus, denda pajak STNK, paspor mati saat traveling, atau terlewatnya perpanjangan sewa dan momen ulang tahun).
+**Ingatin** adalah solusi SaaS (*Software-as-a-Service*) modern yang dirancang untuk mencegah kelalaian fatal akibat lupa tanggal jatuh tempo (seperti garansi gadget hangus, denda pajak STNK, paspor mati saat traveling, atau terlewatnya perpanjangan sewa dan momen ulang tahun).
 
 Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Zero Infrastructure Cost** yang berjalan 100% di free-tier Vercel dan Supabase PostgreSQL.
 
@@ -98,8 +98,8 @@ Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Z
 ```mermaid
 flowchart TD
     subgraph "Telegram Platform"
-        UB["🤖 User Bot (@TempoGuardBot)"]
-        AB["👑 Admin Bot (@TempoGuardAdminBot)"]
+        UB["🤖 User Bot (@IngatinBot)"]
+        AB["👑 Admin Bot (@IngatinAdminBot)"]
     end
 
     subgraph "Vercel Serverless Infrastructure"
@@ -221,16 +221,16 @@ npm run dev:admin
 4. Klik **Deploy**.
 
 ### 2. Daftarkan Webhook Telegram
-Setelah mendapatkan domain dari Vercel (contoh: `https://tempo-guard.vercel.app`), jalankan request berikut di browser atau terminal:
+Setelah mendapatkan domain dari Vercel (contoh: `https://ingatin.vercel.app`), jalankan request berikut di browser atau terminal:
 
 **User Bot Webhook:**
 ```
-https://api.telegram.org/bot<BOT_TOKEN_USER>/setWebhook?url=https://tempo-guard.vercel.app/api/bot/user-webhook&secret_token=<TELEGRAM_SECRET_TOKEN>
+https://api.telegram.org/bot<BOT_TOKEN_USER>/setWebhook?url=https://ingatin.vercel.app/api/bot/user-webhook&secret_token=<TELEGRAM_SECRET_TOKEN>
 ```
 
 **Admin Bot Webhook:**
 ```
-https://api.telegram.org/bot<BOT_TOKEN_ADMIN>/setWebhook?url=https://tempo-guard.vercel.app/api/bot/admin-webhook&secret_token=<TELEGRAM_SECRET_TOKEN>
+https://api.telegram.org/bot<BOT_TOKEN_ADMIN>/setWebhook?url=https://ingatin.vercel.app/api/bot/admin-webhook&secret_token=<TELEGRAM_SECRET_TOKEN>
 ```
 
 ### 3. Vercel Cron Otomatis

@@ -1,6 +1,6 @@
 import { userBot } from '../bot-user/index.js';
 
-console.log('🤖 Starting TempoGuard User Bot in Long-Polling Dev Mode...');
+console.log('🤖 Starting Ingatin User Bot in Long-Polling Dev Mode...');
 
 userBot.start({
   onStart: (botInfo) => {

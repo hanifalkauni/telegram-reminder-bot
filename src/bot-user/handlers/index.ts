@@ -141,7 +141,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
   bot.callbackQuery('action:main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await ctx.reply('🏠 <b>Menu Utama TempoGuard</b>', {
+    await ctx.reply('🏠 <b>Menu Utama Ingatin</b>', {
       parse_mode: 'HTML',
       reply_markup: getMainMenuKeyboard(),
     });

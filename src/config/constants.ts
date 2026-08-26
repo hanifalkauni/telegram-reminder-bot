@@ -1,5 +1,5 @@
 export const APP_CONSTANTS = {
-  APP_NAME: 'TempoGuard',
+  APP_NAME: 'Ingatin',
   FREE_TRIAL_MAX_ITEMS: 2,
   DEFAULT_REMINDER_DAYS: [30, 7, 3, 1, 0],
   TELEGRAM_BATCH_LIMIT_PER_SECOND: 25, // safe limit under 30

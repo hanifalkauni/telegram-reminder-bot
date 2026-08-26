@@ -1,7 +1,7 @@
 {
   "name": "reminder-bot",
   "version": "1.0.0",
-  "description": "TempoGuard Telegram Reminder Bot SaaS - Built with grammY, Supabase, and Vercel Serverless",
+  "description": "Ingatin Telegram Reminder Bot SaaS - Built with grammY, Supabase, and Vercel Serverless",
   "main": "api/bot/user-webhook.ts",
   "scripts": {
     "build": "tsc --noEmit",

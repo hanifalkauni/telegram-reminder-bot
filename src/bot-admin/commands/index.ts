@@ -164,7 +164,7 @@ export function registerAdminCommands(bot: Bot<Context>): void {
 
     try {
       const userBot = new Bot(env.BOT_TOKEN_USER);
-      const userText = `💬 <b>Pesan Balasan dari Admin TempoGuard:</b>\n\n${escapeHTML(replyMessage)}`;
+      const userText = `💬 <b>Pesan Balasan dari Admin Ingatin:</b>\n\n${escapeHTML(replyMessage)}`;
       await userBot.api.sendMessage(targetTelegramId, userText, { parse_mode: 'HTML' });
       await ctx.reply(`✅ Balasan berhasil dikirimkan ke <code>${targetTelegramId}</code>.`, { parse_mode: 'HTML' });
     } catch (err: unknown) {
@@ -284,7 +284,7 @@ export function registerAdminCommands(bot: Bot<Context>): void {
   bot.command('add_payment', async (ctx) => {
     const raw = ctx.match?.trim();
     if (!raw) {
-      await ctx.reply('ℹ️ <b>Format:</b> <code>/add_payment Bank Mandiri | 1234567890 | a.n. TempoGuard</code>', { parse_mode: 'HTML' });
+      await ctx.reply('ℹ️ <b>Format:</b> <code>/add_payment Bank Mandiri | 1234567890 | a.n. Ingatin</code>', { parse_mode: 'HTML' });
       return;
     }
 

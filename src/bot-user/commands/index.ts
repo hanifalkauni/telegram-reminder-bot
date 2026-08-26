@@ -25,7 +25,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     });
 
     const name = from.first_name || 'Teman';
-    const welcomeText = `👋 <b>Selamat datang di TempoGuard, ${escapeHTML(name)}!</b>\n\n` +
+    const welcomeText = `👋 <b>Selamat datang di Ingatin, ${escapeHTML(name)}!</b>\n\n` +
       `Platform asisten pengingat tanggal jatuh tempo otomatis untuk:\n` +
       `• 🎂 <b>Ulang Tahun & Anniversary</b> (Perulangan Tahunan)\n` +
       `• 🚗 <b>Pajak STNK & SIM Kendaraan</b> (1 Thn / 5 Thn)\n` +
@@ -53,7 +53,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
 
   // 2. /help
   bot.command('help', async (ctx) => {
-    const helpText = `📖 <b>Panduan Penggunaan TempoGuard Bot</b>\n\n` +
+    const helpText = `📖 <b>Panduan Penggunaan Ingatin Bot</b>\n\n` +
       `<b>Perintah Utama:</b>\n` +
       `• /start - Menampilkan menu utama\n` +
       `• /add - Menambah pengingat baru (Wizard interaktif)\n` +
@@ -149,7 +149,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       detailStatus = `Anda memiliki <b>${access.activeItemCount} item</b>. Notifikasi otomatis dijeda sampai diperpanjang.`;
     }
 
-    let text = `👤 <b>Profil Pengguna TempoGuard</b>\n\n`;
+    let text = `👤 <b>Profil Pengguna Ingatin</b>\n\n`;
     text += `Nama: <b>${escapeHTML(from.first_name || 'User')}</b>\n`;
     text += `Telegram ID: <code>${from.id}</code>\n`;
     text += `Status Akun: ${statusLabel}\n`;
@@ -266,32 +266,36 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     }
   });
 
-  // 8. /export (CSV Data Portability)
+  // 8. /export (CSV Data Export)
   bot.command('export', async (ctx) => {
     const from = ctx.from;
     if (!from) return;
 
     const access = await checkUserAccess(from.id);
-    const items = await getUserReminders(access.user.id, 500);
+    const { data: items } = await supabase
+      .from('reminder_items')
+      .select('*, category:categories(*)')
+      .eq('user_id', access.user.id)
+      .order('due_date', { ascending: true });
 
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       await ctx.reply('📭 Anda belum memiliki data reminder untuk diekspor.');
       return;
     }
 
-    // Format CSV string
-    let csvContent = 'ID,Judul,Kategori,Jatuh Tempo,Catatan,Status\n';
+    // Buat CSV string
+    let csvContent = 'ID,Judul,Kategori,Jatuh Tempo,Estimasi Biaya,Perulangan,Catatan,Dibuat Pada\n';
     items.forEach((item) => {
-      const daysLeft = getDaysDifference(item.due_date);
-      const cat = item.category?.name || 'Umum';
-      const cleanTitle = `"${(item.title || '').replace(/"/g, '""')}"`;
-      const cleanNotes = `"${(item.notes || '').replace(/"/g, '""')}"`;
-      csvContent += `${item.id},${cleanTitle},"${cat}",${item.due_date},${cleanNotes},"${daysLeft >= 0 ? `${daysLeft} hari lagi` : 'Expired'}"\n`;
+      const catName = item.category?.name || 'Umum';
+      const cost = item.estimated_cost || 0;
+      const rec = item.recurring_type || 'NONE';
+      const notes = (item.notes || '').replace(/"/g, '""');
+      csvContent += `"${item.id}","${item.title.replace(/"/g, '""')}","${catName}","${item.due_date}","${cost}","${rec}","${notes}","${item.created_at}"\n`;
     });
 
     const buffer = Buffer.from(csvContent, 'utf-8');
     await ctx.replyWithDocument(
-      new InputFile(buffer, `TempoGuard_Reminders_${from.id}.csv`),
+      new InputFile(buffer, `Ingatin_Reminders_${from.id}.csv`),
       { caption: `📄 <b>Export Data Selesai!</b>\nTotal ${items.length} item reminder berhasil diekspor.`, parse_mode: 'HTML' }
     );
   });

@@ -138,6 +138,6 @@ ON CONFLICT DO NOTHING;
 -- Seed Rekening & QRIS Dummy Default
 INSERT INTO public.payment_methods (name, account_number, account_name, is_active)
 VALUES 
-    ('Bank BCA', '1234567890', 'a.n. TempoGuard Official', TRUE),
-    ('QRIS All Payment', 'QRIS Dinamis', 'a.n. TempoGuard Official', TRUE)
+    ('Bank BCA', '1234567890', 'a.n. Ingatin Official', TRUE),
+    ('QRIS All Payment', 'QRIS Dinamis', 'a.n. Ingatin Official', TRUE)
 ON CONFLICT DO NOTHING;

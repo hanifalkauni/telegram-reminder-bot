@@ -20,11 +20,11 @@ export function generateGoogleCalendarUrl(title: string, dueDateStr: string, not
   const cleanDate = dueDateStr.replace(/-/g, '');
   // Format all-day event: YYYYMMDD/YYYYMMDD
   const dates = `${cleanDate}/${cleanDate}`;
-  const details = notes ? `${notes}\n\nPengingat via TempoGuard SaaS` : 'Pengingat otomatis via TempoGuard Telegram SaaS';
+  const details = notes ? `${notes}\n\nPengingat via Ingatin SaaS` : 'Pengingat otomatis via Ingatin Telegram SaaS';
   
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `[TempoGuard] ${title}`,
+    text: `[Ingatin] ${title}`,
     dates: dates,
     details: details,
   });

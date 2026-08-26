@@ -305,7 +305,7 @@ export async function sendSubscriptionExpiryWarnings(): Promise<number> {
 
     if (diffDays === 3 || diffDays === 1) {
       try {
-        const text = `⚠️ <b>Peringatan: Masa Langganan Segera Berakhir!</b>\n\nHalo <b>${escapeHTML(user.first_name || 'Kak')}</b>, masa berlangganan TempoGuard Pro Anda akan berakhir dalam <b>${diffDays} hari lagi</b> (${formatDateID(user.active_until)}).\n\nPerpanjang sekarang agar pengingat otomatis Anda tidak tertunda:`;
+        const text = `⚠️ <b>Peringatan: Masa Langganan Segera Berakhir!</b>\n\nHalo <b>${escapeHTML(user.first_name || 'Kak')}</b>, masa berlangganan Ingatin Pro Anda akan berakhir dalam <b>${diffDays} hari lagi</b> (${formatDateID(user.active_until)}).\n\nPerpanjang sekarang agar pengingat otomatis Anda tidak tertunda:`;
         const keyboard = new InlineKeyboard().text('💳 Perpanjang Langganan (/subscribe)', 'action:subscribe');
         
         await bot.api.sendMessage(user.telegram_id, text, {
