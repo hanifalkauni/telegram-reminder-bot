@@ -6,6 +6,8 @@ import { generalRateLimiter } from '../middlewares/rateLimiter.js';
 import { registerUserCommands } from './commands/index.js';
 import { registerUserHandlers } from './handlers/index.js';
 
+import { notifyAdminsOnError } from '../services/errorAlertService.js';
+
 export function createUserBot(): Bot<UserBotContext> {
   const bot = new Bot<UserBotContext>(env.BOT_TOKEN_USER);
 
@@ -27,9 +29,18 @@ export function createUserBot(): Bot<UserBotContext> {
   registerUserCommands(bot);
   registerUserHandlers(bot);
 
-  // 5. Global Error Handler
-  bot.catch((err) => {
+  // 5. Global Error Handler (Log & Auto-Notify Admins)
+  bot.catch(async (err) => {
     console.error('❌ User Bot Error encountered:', err);
+    await notifyAdminsOnError({
+      source: 'User Bot (@IngatinBot)',
+      error: err.error,
+      ctxInfo: {
+        userId: err.ctx?.from?.id,
+        username: err.ctx?.from?.username,
+        messageText: err.ctx?.message?.text || err.ctx?.callbackQuery?.data,
+      },
+    });
   });
 
   return bot;

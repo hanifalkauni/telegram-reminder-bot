@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { executeDailyReminderWorker, sendSubscriptionExpiryWarnings } from '../../src/services/notificationService.js';
+import { notifyAdminsOnError } from '../../src/services/errorAlertService.js';
 import { env } from '../../src/config/env.js';
 
 export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -40,6 +41,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify(responsePayload));
   } catch (error: unknown) {
     console.error('❌ Error executing daily reminder cron worker:', error);
+    await notifyAdminsOnError({
+      source: 'Cron Reminder Worker (07:00 WIB)',
+      error,
+    });
+
     res.statusCode = 500;
     res.end(
       JSON.stringify({

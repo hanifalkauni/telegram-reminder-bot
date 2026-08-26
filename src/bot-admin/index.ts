@@ -4,6 +4,8 @@ import { requireAdmin } from '../middlewares/authGuard.js';
 import { registerAdminCommands } from './commands/index.js';
 import { registerAdminHandlers } from './handlers/index.js';
 
+import { notifyAdminsOnError } from '../services/errorAlertService.js';
+
 export function createAdminBot(): Bot<Context> {
   const bot = new Bot<Context>(env.BOT_TOKEN_ADMIN);
 
@@ -20,9 +22,18 @@ export function createAdminBot(): Bot<Context> {
   registerAdminCommands(bot);
   registerAdminHandlers(bot);
 
-  // 3. Error Handling
-  bot.catch((err) => {
+  // 3. Error Handling (Log & Auto-Notify Admins)
+  bot.catch(async (err) => {
     console.error('❌ Admin Bot Error encountered:', err);
+    await notifyAdminsOnError({
+      source: 'Admin Bot (@IngatinAdminBot)',
+      error: err.error,
+      ctxInfo: {
+        userId: err.ctx?.from?.id,
+        username: err.ctx?.from?.username,
+        messageText: err.ctx?.message?.text || err.ctx?.callbackQuery?.data,
+      },
+    });
   });
 
   return bot;
