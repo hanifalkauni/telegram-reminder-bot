@@ -7,7 +7,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-![License](https://img.shields.io/badge/License-ISC-blue.style=for-the-badge)
+![License](https://img.shields.io/badge/License-Dual%20License%20(Commercial%20Paid)-orange?style=for-the-badge)
 
 **Platform SaaS Asisten Pengingat Berbasis Bot Telegram untuk Memantau Tanggal Jatuh Tempo, Kedaluwarsa, Hari Spesial & Kewajiban Berkala Secara Otomatis.**
 
@@ -300,5 +300,17 @@ telegram-reminder-bot/
 
 ---
 
-## 📜 Lisensi
-Project ini dilisensikan di bawah **ISC License**. Bebas dimodifikasi dan dideploy untuk keperluan personal maupun komersial SaaS.
+## 📜 Lisensi & Ketentuan Penggunaan Komersial
+
+Project ini dilisensikan di bawah model **Dual License (Non-Commercial Free & Commercial Paid License)**:
+
+1. **Penggunaan Pribadi & Non-Komersial (Gratis)**:
+   - Bebas digunakan, dipelajari, dan dimodifikasi untuk keperluan pribadi atau edukasi tanpa dipungut biaya.
+2. **Penggunaan Komersial & Bisnis (Wajib Berbayar)**:
+   - Setiap penggunaan untuk tujuan bisnis, monetisasi berbayar (SaaS publik), penjualan ulang (*reselling*), atau integrasi ke produk komersial pihak ketiga **wajib memiliki Lisensi Komersial Resmi Berbayar**.
+
+Untuk pembelian lisensi komersial atau konsultasi deployment korporat, silakan hubungi author melalui:
+- **GitHub**: [@hanifalkauni](https://github.com/hanifalkauni)
+- **Telegram**: [@hanifalkauni](https://t.me/hanifalkauni)
+
+Lihat detail lengkap perjanjian pada file [LICENSE.md](LICENSE.md).

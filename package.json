@@ -18,8 +18,8 @@
     "supabase",
     "vercel"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Hanif Al-Kauni",
+  "license": "SEE LICENSE IN LICENSE.md",
   "dependencies": {
     "@grammyjs/conversations": "^1.2.0",
     "@grammyjs/ratelimiter": "^1.2.0",
