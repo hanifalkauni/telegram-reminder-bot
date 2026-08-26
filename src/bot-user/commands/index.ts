@@ -61,9 +61,10 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       `• /agenda atau /upcoming - Rekap agenda & estimasi biaya bulan ini\n` +
       `• /profile atau /status - Cek status langganan & sisa kuota\n` +
       `• /subscribe - Berlangganan paket Pro (Unlimited item)\n` +
-      `• /redeem <code> - Aktivasi kode voucher\n` +
+      `• /redeem [kode] - Aktivasi kode voucher\n` +
       `• /export - Download seluruh data reminder Anda (CSV)\n` +
-      `• /contact <pesan> - Kirim pesan bantuan ke Admin (Maks 3x/hari)\n\n` +
+      `• /contact [pesan] - Kirim pesan bantuan ke Admin (Maks 3x/hari)\n` +
+      `• /cancel atau /batal - Membatalkan proses yang sedang berjalan\n\n` +
       `💡 <i>Notifikasi akan otomatis dikirimkan ke chat ini setiap pukul 07:00 WIB saat item mendekati masa jatuh tempo.</i>`;
 
     await ctx.reply(helpText, {
