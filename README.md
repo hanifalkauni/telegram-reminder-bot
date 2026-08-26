@@ -6,7 +6,7 @@ TempoGuard adalah platform SaaS bot Telegram untuk memantau dan mengingatkan tan
 - 🛠️ **Servis AC, Kendaraan & Rumah** (Siklus 3 Bulan / 6 Bulan)
 - 💊 **Kesehatan, Obat & Perawatan** (Obat rutin, vaksin hewan, MCU)
 - 💳 **Kartu ATM, Finansial & Tagihan** (Sewa kos, IPL, tagihan kartu kredit)
-- 🕌 **Ibadah, Zakat & Haul** (Haul Zakat Maal, qadha puasa, kurban)
+- 🕊️ **Ibadah, Donasi & Hari Raya Keagamaan** (Semua Agama: Kurban, Zakat, Natal, Paskah, Nyepi, Waisak, Persepuluhan, Donasi)
 - 👔 **Karier, Pajak SPT & Kontrak Kerja** (Batas lapor SPT, probation, SKCK)
 - 🎓 **Pendidikan, SPP & UKT Kuliah** (SPP bulanan, uang semester)
 - 💻 **Garansi Elektronik & Gadget** (Laptop, HP, kulkas, AC, dsb)

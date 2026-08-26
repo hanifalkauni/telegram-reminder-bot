@@ -30,12 +30,17 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       `• 🎂 <b>Ulang Tahun & Anniversary</b> (Perulangan Tahunan)\n` +
       `• 🚗 <b>Pajak STNK & SIM Kendaraan</b> (1 Thn / 5 Thn)\n` +
       `• 🛠️ <b>Servis AC, Kendaraan & Rumah</b> (Tiap 3/6 Bln)\n` +
+      `• 🕊️ <b>Ibadah, Donasi & Hari Keagamaan</b> (Semua Agama)\n` +
       `• 💊 <b>Kesehatan, Obat & Perawatan</b>\n` +
       `• 💳 <b>Kartu ATM, Finansial & Tagihan</b> (Bulanan/Tahunan)\n` +
+      `• 👔 <b>Karier, Pajak SPT & Kontrak Kerja</b>\n` +
+      `• 🎓 <b>Pendidikan, SPP & UKT Kuliah</b>\n` +
       `• 💻 <b>Garansi Gadget & Elektronik</b>\n` +
       `• 📄 <b>Paspor, Visa & Lisensi Profesi</b>\n` +
+      `• ✈️ <b>Travel, Visa & Poin/Miles</b>\n` +
       `• 🌐 <b>Domain, Hosting & Subscription</b>\n` +
       `• 🏠 <b>Sewa Rumah, Kos & Tagihan</b>\n` +
+      `• 🪴 <b>Tanaman & Perawatan Kebun</b>\n` +
       `• 🐾 <b>Perawatan Hewan Peliharaan</b>\n\n` +
       `🎁 <b>Akun Free Trial:</b> Anda dapat menyimpan hingga <b>2 item pengingat gratis</b>.\n\n` +
       `Silakan pilih menu di bawah untuk memulai:`;

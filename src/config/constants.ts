@@ -17,7 +17,7 @@ export const CATEGORY_ICONS: Record<string, string> = {
   maintenance: '🛠️',
   health: '💊',
   financial: '💳',
-  spiritual: '🕌',
+  spiritual: '🕊️',
   career: '👔',
   education: '🎓',
   electronics: '💻',

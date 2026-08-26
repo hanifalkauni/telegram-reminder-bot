@@ -59,7 +59,7 @@ export async function addReminderWizard(
   if (isBirthday) {
     titlePrompt = `🎂 <b>Langkah 2 dari 6: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`;
   } else if (isSpiritual) {
-    titlePrompt = `🕌 <b>Langkah 2 dari 6: Nama Ibadah / Zakat</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda ibadah (misal: <i>"Kurban Idul Adha"</i>, <i>"Haul Tabungan Zakat Maal"</i>, atau <i>"Qadha Puasa Ramadhan"</i>):`;
+    titlePrompt = `🕊️ <b>Langkah 2 dari 6: Nama Ibadah / Donasi / Hari Suci</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda (misal: <i>"Natal & Paskah"</i>, <i>"Kurban Idul Adha"</i>, <i>"Persepuluhan / Zakat"</i>, <i>"Nyepi / Waisak"</i>, atau <i>"Donasi Rutin"</i>):`;
   }
 
   await ctx.reply(titlePrompt, { parse_mode: 'HTML' });

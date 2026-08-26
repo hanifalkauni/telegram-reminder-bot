@@ -115,7 +115,7 @@ VALUES
     ('maintenance', 'Servis AC, Kendaraan & Rumah', '🛠️', '{14, 7, 3, 1, 0}'),
     ('health', 'Kesehatan, Obat & Perawatan', '💊', '{14, 7, 3, 1, 0}'),
     ('financial', 'Kartu ATM, Finansial & Tagihan', '💳', '{14, 7, 3, 1, 0}'),
-    ('spiritual', 'Ibadah, Zakat & Haul', '🕌', '{30, 14, 7, 3, 0}'),
+    ('spiritual', 'Ibadah, Donasi & Hari Keagamaan', '🕊️', '{30, 14, 7, 3, 0}'),
     ('career', 'Karier, Pajak SPT & Kontrak', '👔', '{30, 14, 7, 3, 1, 0}'),
     ('education', 'Pendidikan, SPP & UKT', '🎓', '{30, 14, 7, 3, 1, 0}'),
     ('electronics', 'Garansi Elektronik & Gadget', '💻', '{30, 7, 3, 1, 0}'),

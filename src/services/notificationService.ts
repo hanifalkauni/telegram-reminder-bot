@@ -193,19 +193,19 @@ export async function executeDailyReminderWorker(): Promise<{
           caption += `\n💡 <i>Siapkan kado, reservasi, atau ucapan spesial dari sekarang!</i>`;
         }
       } else if (isSpiritual) {
-        caption = `🕌 <b>PENGINGAT IBADAH & HAUL ZAKAT! (${urgency.badge} ${urgency.status})</b>\n\n` +
-          `${nameGreeting}jadwal ibadah/kewajiban berikut akan segera tiba:\n\n` +
-          `🕌 <b>${escapeHTML(candidate.title)}</b>\n` +
-          `📅 Tanggal Masehi: <b>${formatDateID(candidate.due_date)}</b>\n` +
-          (hijriStr ? `🌙 Kalender Hijriyah: <b>${hijriStr}</b>\n` : '');
+        caption = `🕊️ <b>PENGINGAT IBADAH & HARI RAYA KEAGAMAAN! (${urgency.badge} ${urgency.status})</b>\n\n` +
+          `${nameGreeting}jadwal ibadah, donasi, atau hari suci berikut akan segera tiba:\n\n` +
+          `🕊️ <b>${escapeHTML(candidate.title)}</b>\n` +
+          `📅 Tanggal: <b>${formatDateID(candidate.due_date)}</b>\n` +
+          (candidate.recurring_type === 'HIJRI_YEARLY' && hijriStr ? `🌙 Kalender Hijriyah: <b>${hijriStr}</b>\n` : '');
         if (candidate.estimated_cost > 0) {
           const costStr = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(candidate.estimated_cost);
-          caption += `💵 Estimasi Dana Kurban/Zakat: <b>${costStr}</b>\n`;
+          caption += `💵 Estimasi Dana / Donasi: <b>${costStr}</b>\n`;
         }
         if (candidate.notes) {
           caption += `📝 Catatan: <code>${escapeHTML(candidate.notes)}</code>\n`;
         }
-        caption += `\n💡 <i>Semoga Allah mempermudah persiapan dan niat ibadah Anda!</i> ✨`;
+        caption += `\n💡 <i>Semoga persiapan dan niat tulus ibadah Anda berjalan lancar dan penuh berkah!</i> ✨`;
       } else {
         caption = `⏰ <b>PENGINGAT JATUH TEMPO! (${urgency.badge} ${urgency.status})</b>\n\n` +
           `${nameGreeting}item berikut mendekati masa kedaluwarsa:\n\n` +

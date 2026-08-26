@@ -45,7 +45,7 @@ export function formatReminderItemCard(item: ReminderItemRecord): string {
   let msg = `<b>${icon} ${escapeHTML(item.title)}</b>\n`;
   msg += `📂 Kategori: <i>${escapeHTML(categoryName)}</i>\n`;
   msg += `📅 Jatuh Tempo: <b>${formatDateID(item.due_date)}</b>\n`;
-  if (hijriStr && (item.category?.code === 'spiritual' || item.recurring_type === 'HIJRI_YEARLY')) {
+  if (hijriStr && item.recurring_type === 'HIJRI_YEARLY') {
     msg += `🌙 Kalender Hijriyah: <b>${hijriStr}</b>\n`;
   }
   msg += `⏳ Status: ${urgency.badge} <b>${urgency.status}</b>\n`;
