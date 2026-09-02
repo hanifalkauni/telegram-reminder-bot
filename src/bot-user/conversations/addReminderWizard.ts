@@ -15,14 +15,15 @@ function isCancelInput(text?: string): boolean {
 }
 
 /**
- * Interactive Wizard untuk menambah item reminder baru (Dapat dibatalkan di setiap langkah)
+ * Interactive Wizard untuk menambah item reminder baru (Auto-hide button setelah diklik)
  */
 export async function addReminderWizard(
   conversation: UserBotConversation,
   ctx: UserBotContext
 ): Promise<void> {
   const telegramId = ctx.from?.id;
-  if (!telegramId) return;
+  const chatId = ctx.chat?.id;
+  if (!telegramId || !chatId) return;
 
   const cancelKeyboard = new InlineKeyboard().text('❌ Batalkan Penambahan', 'wizard_cancel');
 
@@ -44,12 +45,15 @@ export async function addReminderWizard(
   });
   categoryKeyboard.row().text('❌ Batalkan', 'wizard_cancel');
 
-  await ctx.reply(
+  const catPromptMsg = await ctx.reply(
     '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\nSilakan pilih jenis item yang ingin diingatkan:\n<i>(Ketik /batal atau klik tombol di bawah untuk membatalkan kapan saja)</i>',
     { parse_mode: 'HTML', reply_markup: categoryKeyboard }
   );
 
   const catResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
+  // Auto-hide buttons pada prompt langkah 1
+  await ctx.api.editMessageReplyMarkup(chatId, catPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
+
   if (catResponse.callbackQuery) {
     await catResponse.answerCallbackQuery();
     if (catResponse.callbackQuery.data === 'wizard_cancel') {
@@ -79,9 +83,12 @@ export async function addReminderWizard(
     titlePrompt = `🕊️ <b>Langkah 2 dari 6: Nama Ibadah / Donasi / Hari Suci</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda (misal: <i>"Natal & Paskah"</i>, <i>"Kurban Idul Adha"</i>, <i>"Persepuluhan / Zakat"</i>, <i>"Nyepi / Waisak"</i>, atau <i>"Donasi Rutin"</i>):`;
   }
 
-  await ctx.reply(titlePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
+  const titlePromptMsg = await ctx.reply(titlePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
   const titleResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+  // Auto-hide buttons pada prompt langkah 2
+  await ctx.api.editMessageReplyMarkup(chatId, titlePromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
+
   if (titleResponse.callbackQuery) {
     await titleResponse.answerCallbackQuery();
     if (titleResponse.callbackQuery.data === 'wizard_cancel') {
@@ -102,11 +109,14 @@ export async function addReminderWizard(
     ? `📅 <b>Langkah 3 dari 6: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
     : `📅 <b>Langkah 3 dari 6: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
 
-  await ctx.reply(datePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
+  let datePromptMsg = await ctx.reply(datePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
   let validDateStr: string | null = null;
   while (!validDateStr) {
     const dateResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+    // Auto-hide buttons pada prompt tanggal
+    await ctx.api.editMessageReplyMarkup(chatId, datePromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
+
     if (dateResponse.callbackQuery) {
       await dateResponse.answerCallbackQuery();
       if (dateResponse.callbackQuery.data === 'wizard_cancel') {
@@ -125,7 +135,7 @@ export async function addReminderWizard(
     if (parsed) {
       validDateStr = isBirthday ? getNextUpcomingOccurrence(parsed) : parsed;
     } else {
-      await ctx.reply(
+      datePromptMsg = await ctx.reply(
         '⚠️ <b>Format tanggal tidak valid!</b>\nMohon ketikkan format yang benar, contoh: <code>2026-12-31</code> atau <code>31/12/2026</code>\nAtau klik tombol batal di bawah:',
         { parse_mode: 'HTML', reply_markup: cancelKeyboard }
       );
@@ -154,12 +164,15 @@ export async function addReminderWizard(
       .text('🪪 Tiap 5 Tahun (SIM/Paspor/ATM)', 'rec:FIVE_YEARS').row()
       .text('❌ Batalkan Penambahan', 'wizard_cancel');
 
-    await ctx.reply(
+    const recPromptMsg = await ctx.reply(
       '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
       { parse_mode: 'HTML', reply_markup: recurringKeyboard }
     );
 
     const recResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
+    // Auto-hide buttons pada prompt langkah 4
+    await ctx.api.editMessageReplyMarkup(chatId, recPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
+
     if (recResponse.callbackQuery) {
       await recResponse.answerCallbackQuery();
       if (recResponse.callbackQuery.data === 'wizard_cancel') {
@@ -182,12 +195,15 @@ export async function addReminderWizard(
     .row()
     .text('❌ Batalkan', 'wizard_cancel');
 
-  await ctx.reply(
+  const costPromptMsg = await ctx.reply(
     `💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana (Opsional)</b>\n\nKetikkan perkiraan nominal biaya (misal: <code>150000</code>, <code>2500000</code>) untuk membantu menyiapkan dana saat jatuh tempo.\nAtau tekan tombol di bawah untuk melewati:`,
     { parse_mode: 'HTML', reply_markup: skipCostKeyboard }
   );
 
   const costResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+  // Auto-hide buttons pada prompt langkah 5
+  await ctx.api.editMessageReplyMarkup(chatId, costPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
+
   if (costResponse.callbackQuery) {
     await costResponse.answerCallbackQuery();
     if (costResponse.callbackQuery.data === 'wizard_cancel') {
@@ -216,12 +232,14 @@ export async function addReminderWizard(
     ? `🎁 <b>Langkah 6 dari 6: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
     : `📝 <b>Langkah 6 dari 6: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
 
-  await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipNotesKeyboard });
+  const notesPromptMsg = await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipNotesKeyboard });
+
+  const notesResponse = await conversation.waitFor(['message:text', 'message:photo', 'callback_query:data']);
+  // Auto-hide buttons pada prompt langkah 6
+  await ctx.api.editMessageReplyMarkup(chatId, notesPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
   let notes: string | undefined;
   let photoFileId: string | undefined;
-
-  const notesResponse = await conversation.waitFor(['message:text', 'message:photo', 'callback_query:data']);
 
   if (notesResponse.callbackQuery) {
     await notesResponse.answerCallbackQuery();

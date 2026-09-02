@@ -28,11 +28,13 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   // 1. Menu Navigations
   bot.callbackQuery('action:add_reminder', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     await ctx.conversation.enter('addReminderWizard');
   });
 
   bot.callbackQuery('action:list_reminders', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const from = ctx.from;
     if (!from) return;
 
@@ -70,6 +72,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   // Monthly Agenda Handler
   bot.callbackQuery('action:monthly_agenda', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const from = ctx.from;
     if (!from) return;
 
@@ -116,6 +119,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
   bot.callbackQuery('action:profile', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const from = ctx.from;
     if (!from) return;
 
@@ -141,6 +145,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
   bot.callbackQuery('action:main_menu', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     await ctx.reply('🏠 <b>Menu Utama Ingatin</b>', {
       parse_mode: 'HTML',
       reply_markup: getMainMenuKeyboard(),
@@ -149,6 +154,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
   bot.callbackQuery('action:help', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     await ctx.reply(
       '📖 <b>Bantuan & Panduan:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /agenda untuk rekap bulanan\n• Ketik /subscribe untuk upgrade kuota',
       { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('➕ Tambah Item', 'action:add_reminder') }
@@ -157,6 +163,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
 
   bot.callbackQuery('action:subscribe', async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const packages = await getActivePackages();
 
     let text = `💎 <b>PILIH PAKET BERLANGGANAN</b>\n\nSilakan tentukan paket yang Anda inginkan:`;
