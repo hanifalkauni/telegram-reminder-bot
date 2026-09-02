@@ -613,7 +613,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
           }
         );
         return;
-      } else if (isAwaiting) {
+      } else if (isAwaiting || result.isExistingCode) {
         ctx.session.awaitingRedeemCode = false;
         await ctx.reply(`❌ <b>Gagal:</b> ${result.message}`, { parse_mode: 'HTML' });
         return;

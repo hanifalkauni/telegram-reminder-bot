@@ -73,7 +73,7 @@ export async function createConfirmationCode(durationDays: number, createdByUser
 export async function redeemCode(
   codeStr: string,
   userId: number
-): Promise<{ success: boolean; message: string; durationDays?: number }> {
+): Promise<{ success: boolean; message: string; durationDays?: number; isExistingCode?: boolean }> {
   const cleanCode = codeStr.trim().toUpperCase();
 
   const { data: codeRecord, error: findError } = await supabase
@@ -83,11 +83,11 @@ export async function redeemCode(
     .maybeSingle();
 
   if (findError || !codeRecord) {
-    return { success: false, message: 'Kode voucher tidak valid atau tidak ditemukan.' };
+    return { success: false, message: 'Kode voucher tidak valid atau tidak ditemukan.', isExistingCode: false };
   }
 
   if (codeRecord.is_used) {
-    return { success: false, message: 'Kode voucher ini sudah pernah digunakan sebelumnya.' };
+    return { success: false, message: 'Kode voucher ini sudah pernah digunakan sebelumnya.', isExistingCode: true };
   }
 
   // Hitung masa aktif baru
@@ -95,7 +95,7 @@ export async function redeemCode(
   const userUpdate = await extendUserSubscription(userId, durationDays);
 
   if (!userUpdate) {
-    return { success: false, message: 'Gagal mengaktifkan akun. Silakan coba lagi.' };
+    return { success: false, message: 'Gagal mengaktifkan akun. Silakan coba lagi.', isExistingCode: true };
   }
 
   // Tandai voucher sudah terpakai
@@ -112,6 +112,7 @@ export async function redeemCode(
     success: true,
     message: durationDays === 0 ? 'Akses Seumur Hidup (Lifetime) berhasil aktif!' : `Langganan aktif selama ${durationDays} hari!`,
     durationDays,
+    isExistingCode: true,
   };
 }
 
