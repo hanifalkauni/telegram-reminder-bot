@@ -156,9 +156,41 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     await ctx.answerCallbackQuery();
     await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     await ctx.reply(
-      '📖 <b>Bantuan & Panduan:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /agenda untuk rekap bulanan\n• Ketik /subscribe untuk upgrade kuota',
-      { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('➕ Tambah Item', 'action:add_reminder') }
+      '📖 <b>Bantuan & Panduan Cepat:</b>\n\n• Ketik /add untuk mencatat item baru\n• Ketik /list untuk melihat reminder\n• Ketik /agenda untuk rekap bulanan\n• Ketik /about untuk info interval notifikasi\n• Ketik /subscribe untuk upgrade kuota',
+      {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard()
+          .text('➕ Tambah Item', 'action:add_reminder')
+          .text('ℹ️ Tentang & Jadwal (/about)', 'action:about'),
+      }
     );
+  });
+
+  bot.callbackQuery('action:about', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
+    const aboutText = `⏰ <b>Tentang Ingatin Bot (@IngatinBot)</b>\n\n` +
+      `<b>Ingatin</b> adalah asisten pintar Telegram untuk memantau tanggal jatuh tempo dokumen, STNK, SIM, garansi, tagihan, servis berkala, dan hari spesial Anda secara otomatis.\n\n` +
+      `🔔 <b>Waktu Notifikasi Harian:</b>\n` +
+      `Pengingat otomatis dikirimkan setiap hari tepat pukul <b>07:00 WIB</b>.\n\n` +
+      `📅 <b>Standar Jadwal Pengingat per Kategori:</b>\n` +
+      `• 🚗 <b>Pajak STNK & SIM Kendaraan:</b> <code>H-30, H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🎂 <b>Ulang Tahun & Hari Spesial:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 💻 <b>Masa Garansi Gadget/Elektronik:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n` +
+      `• 📄 <b>Paspor, Visa & Lisensi Legal:</b> <code>H-60, H-30, H-14, H-7, Hari H</code>\n` +
+      `• 💳 <b>Tagihan, Kos & Kartu ATM:</b> <code>H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🛠️ <b>Servis AC, Ganti Oli & Rumah:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🕊️ <b>Ibadah, Donasi & Hari Keagamaan:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🏥 <b>Polis Asuransi & Kesehatan:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n\n` +
+      `🔒 <b>Privasi & Keamanan:</b>\n` +
+      `Data pengingat Anda tersimpan secara privat khusus untuk akun Telegram Anda dan tidak pernah dibagikan kepada pihak ketiga.`;
+
+    await ctx.reply(aboutText, {
+      parse_mode: 'HTML',
+      reply_markup: new InlineKeyboard()
+        .text('➕ Mulai Tambah Reminder', 'action:add_reminder')
+        .text('🏠 Menu Utama', 'action:main_menu'),
+    });
   });
 
   bot.callbackQuery('action:subscribe', async (ctx) => {

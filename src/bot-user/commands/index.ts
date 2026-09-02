@@ -51,7 +51,33 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
     });
   });
 
-  // 2. /help
+  // 2. /about & /tentang & /info
+  bot.command(['about', 'tentang', 'info'], async (ctx) => {
+    const aboutText = `⏰ <b>Tentang Ingatin Bot (@IngatinBot)</b>\n\n` +
+      `<b>Ingatin</b> adalah asisten pintar Telegram untuk memantau tanggal jatuh tempo dokumen, STNK, SIM, garansi, tagihan, servis berkala, dan hari spesial Anda secara otomatis.\n\n` +
+      `🔔 <b>Waktu Notifikasi Harian:</b>\n` +
+      `Pengingat otomatis dikirimkan setiap hari tepat pukul <b>07:00 WIB</b>.\n\n` +
+      `📅 <b>Standar Jadwal Pengingat per Kategori:</b>\n` +
+      `• 🚗 <b>Pajak STNK & SIM Kendaraan:</b> <code>H-30, H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🎂 <b>Ulang Tahun & Hari Spesial:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 💻 <b>Masa Garansi Gadget/Elektronik:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n` +
+      `• 📄 <b>Paspor, Visa & Lisensi Legal:</b> <code>H-60, H-30, H-14, H-7, Hari H</code>\n` +
+      `• 💳 <b>Tagihan, Kos & Kartu ATM:</b> <code>H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🛠️ <b>Servis AC, Ganti Oli & Rumah:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🕊️ <b>Ibadah, Donasi & Hari Keagamaan:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
+      `• 🏥 <b>Polis Asuransi & Kesehatan:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n\n` +
+      `🔒 <b>Privasi & Keamanan:</b>\n` +
+      `Data pengingat Anda tersimpan secara privat khusus untuk akun Telegram Anda dan tidak pernah dibagikan kepada pihak ketiga.`;
+
+    await ctx.reply(aboutText, {
+      parse_mode: 'HTML',
+      reply_markup: new InlineKeyboard()
+        .text('➕ Mulai Tambah Reminder', 'action:add_reminder')
+        .text('🏠 Menu Utama', 'action:main_menu'),
+    });
+  });
+
+  // 3. /help
   bot.command('help', async (ctx) => {
     const helpText = `📖 <b>Panduan Penggunaan Ingatin Bot</b>\n\n` +
       `<b>Perintah Utama:</b>\n` +
@@ -60,6 +86,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       `• /list atau /reminders - Melihat seluruh item pengingat aktif\n` +
       `• /agenda atau /upcoming - Rekap agenda & estimasi biaya bulan ini\n` +
       `• /profile atau /status - Cek status langganan & sisa kuota\n` +
+      `• /about - Info detail fungsi bot & jadwal pengingat per kategori\n` +
       `• /subscribe - Berlangganan paket Pro (Unlimited item)\n` +
       `• /redeem [kode] - Aktivasi kode voucher\n` +
       `• /export - Download seluruh data reminder Anda (CSV)\n` +

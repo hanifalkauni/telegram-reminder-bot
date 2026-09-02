@@ -64,6 +64,15 @@ export function formatReminderItemCard(item: ReminderItemRecord): string {
     msg += `💵 Estimasi Biaya: <b>${costFormatted}</b>\n`;
   }
 
+  if (item.reminder_intervals && item.reminder_intervals.length > 0) {
+    const formattedIntervals = item.reminder_intervals
+      .slice()
+      .sort((a: number, b: number) => b - a)
+      .map((days: number) => (days === 0 ? 'Hari H' : `H-${days}`))
+      .join(', ');
+    msg += `🔔 Pengingat: <code>${formattedIntervals} (07:00 WIB)</code>\n`;
+  }
+
   if (item.notes) {
     msg += `📝 Catatan: <code>${escapeHTML(item.notes)}</code>\n`;
   }
@@ -88,5 +97,6 @@ export function getMainMenuKeyboard(): InlineKeyboard {
     .text('👤 Profil & Kuota', 'action:profile')
     .text('❓ Panduan (/help)', 'action:help')
     .row()
+    .text('ℹ️ Tentang Bot (/about)', 'action:about')
     .text('💬 Bantuan (/contact)', 'action:contact');
 }
