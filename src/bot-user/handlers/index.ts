@@ -302,9 +302,10 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       .text('➕ +1 Thn', `action:renew_months:${item.id}:12`)
       .text('➕ +5 Thn', `action:renew_months:${item.id}:60`)
       .row()
+      .text('✏️ Edit Item', `action:edit_menu:${item.id}`)
       .text('⏸️ Snooze (+7 Hari)', `action:snooze:${item.id}`)
-      .text('🗑️ Hapus Item', `action:delete:${item.id}`)
       .row()
+      .text('🗑️ Hapus Item', `action:delete:${item.id}`)
       .text('📋 Kembali ke Daftar', 'action:list_reminders');
 
     if (item.photo_file_id) {
@@ -316,6 +317,56 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     } else {
       await ctx.reply(card, { parse_mode: 'HTML', reply_markup: keyboard });
     }
+  });
+
+  // Menu Edit Item Reminder
+  bot.callbackQuery(/^action:edit_menu:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
+    const reminderId = parseInt(ctx.match[1], 10);
+    const from = ctx.from;
+    if (!from) return;
+
+    const access = await checkUserAccess(from.id);
+    const item = await getReminderById(reminderId, access.user.id);
+    if (!item) {
+      await ctx.reply('⚠️ Item tidak ditemukan.');
+      return;
+    }
+
+    const editMenuText = `✏️ <b>PILIH BAGIAN YANG INGIN DIEDIT:</b>\n\n` +
+      `<b>${item.category?.icon || '📌'} ${escapeHTML(item.title)}</b>\n` +
+      `📅 Tanggal: <b>${formatDateID(item.due_date)}</b>\n` +
+      `💵 Biaya: <b>${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(item.estimated_cost || 0)}</b>\n` +
+      `🔄 Siklus: <b>${item.recurring_type || 'Sekali Saja'}</b>\n\n` +
+      `<i>Silakan pilih data yang ingin Anda ubah:</i>`;
+
+    const editKeyboard = new InlineKeyboard()
+      .text('🏷️ Edit Judul / Nama', `action:edit_field:${item.id}:title`)
+      .row()
+      .text('📅 Edit Tanggal Jatuh Tempo', `action:edit_field:${item.id}:date`)
+      .row()
+      .text('💵 Edit Estimasi Biaya', `action:edit_field:${item.id}:cost`)
+      .row()
+      .text('🔔 Edit Jadwal Pengingat (H-)', `action:edit_field:${item.id}:intervals`)
+      .row()
+      .text('📝 Edit Catatan / Foto', `action:edit_field:${item.id}:notes`)
+      .row()
+      .text('🔄 Edit Siklus Perulangan', `action:edit_field:${item.id}:cycle`)
+      .row()
+      .text('🔙 Kembali ke Detail', `action:view:${item.id}`);
+
+    await ctx.reply(editMenuText, { parse_mode: 'HTML', reply_markup: editKeyboard });
+  });
+
+  bot.callbackQuery(/^action:edit_field:(\d+):([a-z]+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
+    const reminderId = parseInt(ctx.match[1], 10);
+    const field = ctx.match[2] as 'title' | 'date' | 'cost' | 'intervals' | 'notes' | 'cycle';
+
+    ctx.session.editingReminder = { reminderId, field };
+    await ctx.conversation.enter('editReminderWizard');
   });
 
   bot.callbackQuery(/^action:delete:(\d+)$/, async (ctx) => {

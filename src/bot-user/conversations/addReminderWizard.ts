@@ -11,6 +11,10 @@ export interface SessionData {
   selectedPackageDuration?: number;
   selectedPackagePrice?: number;
   awaitingRedeemCode?: boolean;
+  editingReminder?: {
+    reminderId: number;
+    field: 'title' | 'date' | 'cost' | 'intervals' | 'notes' | 'cycle';
+  };
 }
 
 export type UserBotContext = Context & ConversationFlavor & SessionFlavor<SessionData>;

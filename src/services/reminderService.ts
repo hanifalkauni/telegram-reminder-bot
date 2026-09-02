@@ -171,6 +171,48 @@ export async function snoozeReminder(reminderId: number, userId: number, daysToA
 }
 
 /**
+ * Update field parsial item reminder (Edit judul, tanggal, biaya, intervals, catatan, foto, recurring)
+ */
+export async function updateReminderItem(
+  reminderId: number,
+  userId: number,
+  updates: {
+    title?: string;
+    dueDate?: string;
+    notes?: string | null;
+    estimatedCost?: number;
+    reminderIntervals?: number[];
+    photoFileId?: string | null;
+    isRecurring?: boolean;
+    recurringType?: string;
+  }
+): Promise<ReminderItemRecord | null> {
+  const dbUpdates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.title !== undefined) dbUpdates.title = updates.title;
+  if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+  if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+  if (updates.estimatedCost !== undefined) dbUpdates.estimated_cost = updates.estimatedCost;
+  if (updates.reminderIntervals !== undefined) dbUpdates.reminder_intervals = updates.reminderIntervals;
+  if (updates.photoFileId !== undefined) dbUpdates.photo_file_id = updates.photoFileId;
+  if (updates.isRecurring !== undefined) dbUpdates.is_recurring = updates.isRecurring;
+  if (updates.recurringType !== undefined) dbUpdates.recurring_type = updates.recurringType;
+
+  const { data, error } = await supabase
+    .from('reminder_items')
+    .update(dbUpdates)
+    .eq('id', reminderId)
+    .eq('user_id', userId)
+    .select('*, category:categories(*)')
+    .single();
+
+  if (error || !data) return null;
+  return data as ReminderItemRecord;
+}
+
+/**
  * Mengambil agenda reminder untuk bulan tertentu (Monthly Agenda) beserta total estimasi biayanya
  */
 export async function getMonthlyAgenda(
