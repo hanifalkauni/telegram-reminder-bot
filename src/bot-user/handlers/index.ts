@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import { UserBotContext } from '../conversations/addReminderWizard.js';
 import { checkUserAccess } from '../../services/accessControl.js';
 import {
@@ -442,21 +442,26 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       const { data: admins } = await supabase.from('users').select('telegram_id').eq('is_admin', true);
 
       if (admins && admins.length > 0) {
-        // Ambil URL file asli dari Telegram API agar Admin Bot dapat mengakses foto milik User Bot
-        let photoUrl: string | null = null;
+        // Download buffer foto asli via User Bot agar dapat di-upload sebagai file binary ke Admin Bot
+        let photoBuffer: Buffer | null = null;
         try {
           const fileInfo = await ctx.api.getFile(highestResPhoto.file_id);
           if (fileInfo.file_path) {
-            photoUrl = `https://api.telegram.org/file/bot${env.BOT_TOKEN_USER}/${fileInfo.file_path}`;
+            const fileUrl = `https://api.telegram.org/file/bot${env.BOT_TOKEN_USER}/${fileInfo.file_path}`;
+            const res = await fetch(fileUrl);
+            if (res.ok) {
+              const arrayBuffer = await res.arrayBuffer();
+              photoBuffer = Buffer.from(arrayBuffer);
+            }
           }
         } catch (fileErr) {
-          console.warn('Could not get photo url from user bot:', fileErr);
+          console.warn('Could not fetch photo buffer from user bot:', fileErr);
         }
 
         for (const adm of admins) {
           try {
-            if (photoUrl) {
-              await adminBot.api.sendPhoto(adm.telegram_id, photoUrl, {
+            if (photoBuffer) {
+              await adminBot.api.sendPhoto(adm.telegram_id, new InputFile(photoBuffer, 'bukti_transfer.jpg'), {
                 caption,
                 parse_mode: 'HTML',
                 reply_markup: adminKeyboard,
@@ -468,8 +473,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
               });
             }
           } catch (sendErr) {
-            console.error(`Failed to send photo to admin ${adm.telegram_id}, trying text fallback:`, sendErr);
-            // Fallback pesan teks jika sendPhoto gagal
+            console.error(`Failed to send photo to admin ${adm.telegram_id}, fallback to text:`, sendErr);
             await adminBot.api.sendMessage(adm.telegram_id, caption, {
               parse_mode: 'HTML',
               reply_markup: adminKeyboard,
