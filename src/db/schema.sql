@@ -1,5 +1,5 @@
 -- =================================================================================
--- TEMPO GUARD SAAS: SUPABASE POSTGRESQL DATABASE SCHEMA MIGRATION
+-- INGATIN SAAS: SUPABASE POSTGRESQL DATABASE SCHEMA MIGRATION
 -- =================================================================================
 
 -- 1. TABEL PENGGUNA (users)

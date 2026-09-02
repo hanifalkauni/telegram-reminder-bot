@@ -243,7 +243,7 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       return;
     }
 
-    let text = `💎 <b>PILIH PAKET LANGGANAN TEMPO GUARD PRO</b>\n\n`;
+    let text = `💎 <b>PILIH PAKET LANGGANAN INGATIN PRO</b>\n\n`;
     text += `Dapatkan akses penuh:\n`;
     text += `✅ <b>Simpan Item Tanpa Batas</b> (Unlimited Reminders)\n`;
     text += `✅ <b>Notifikasi Berulang Lengkap</b> (H-30, H-14, H-7, H-3, H-1, Hari H)\n`;

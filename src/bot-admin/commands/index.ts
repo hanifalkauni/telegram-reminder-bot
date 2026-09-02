@@ -14,7 +14,7 @@ import { formatDateID } from '../../utils/dateHelper.js';
 export function registerAdminCommands(bot: Bot<Context>): void {
   // 1. /start
   bot.command('start', async (ctx) => {
-    const text = `👑 <b>PANEL ADMINISTRATOR TEMPO GUARD</b>\n\n` +
+    const text = `👑 <b>PANEL ADMINISTRATOR INGATIN</b>\n\n` +
       `Selamat datang di Bot Kontrol Bisnis & Manajemen Sistem.\n\n` +
       `<b>Perintah Manajemen Bisnis:</b>\n` +
       `• /admin_stats - Ringkasan statistik & metrik SaaS\n` +
@@ -46,7 +46,7 @@ export function registerAdminCommands(bot: Bot<Context>): void {
     const trialUsers = (totalUsers || 0) - (activeSubs || 0);
     const conversionRate = totalUsers && totalUsers > 0 ? (((activeSubs || 0) / totalUsers) * 100).toFixed(1) : '0';
 
-    let statsText = `📊 <b>METRIK BISNIS & SISTEM TEMPO GUARD</b>\n\n`;
+    let statsText = `📊 <b>METRIK BISNIS & SISTEM INGATIN</b>\n\n`;
     statsText += `👥 <b>Total Pengguna Terdaftar:</b> ${totalUsers || 0} akun\n`;
     statsText += `💎 <b>Active Subscribers (Pro):</b> ${activeSubs || 0} akun\n`;
     statsText += `🎁 <b>Free Trial / Non-Active:</b> ${trialUsers} akun\n`;
@@ -193,7 +193,7 @@ export function registerAdminCommands(bot: Bot<Context>): void {
 
     for (const u of users) {
       try {
-        await userBot.api.sendMessage(u.telegram_id, `📢 <b>PENGUMUMAN RESMI TEMPO GUARD</b>\n\n${escapeHTML(msg)}`, { parse_mode: 'HTML' });
+        await userBot.api.sendMessage(u.telegram_id, `📢 <b>PENGUMUMAN RESMI INGATIN</b>\n\n${escapeHTML(msg)}`, { parse_mode: 'HTML' });
         success++;
         await new Promise((r) => setTimeout(r, 40));
       } catch {
