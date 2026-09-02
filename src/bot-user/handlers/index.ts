@@ -13,6 +13,7 @@ import {
   getActivePackages,
   getActivePaymentMethods
 } from '../../services/subscriptionService.js';
+import { notifyAdminsOnError } from '../../services/errorAlertService.js';
 import { supabase } from '../../db/supabase.js';
 import { env } from '../../config/env.js';
 import { formatDateID, getDaysDifference } from '../../utils/dateHelper.js';
@@ -441,13 +442,42 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       const { data: admins } = await supabase.from('users').select('telegram_id').eq('is_admin', true);
 
       if (admins && admins.length > 0) {
-        for (const adm of admins) {
-          await adminBot.api.sendPhoto(adm.telegram_id, highestResPhoto.file_id, {
-            caption,
-            parse_mode: 'HTML',
-            reply_markup: adminKeyboard,
-          });
+        // Ambil URL file asli dari Telegram API agar Admin Bot dapat mengakses foto milik User Bot
+        let photoUrl: string | null = null;
+        try {
+          const fileInfo = await ctx.api.getFile(highestResPhoto.file_id);
+          if (fileInfo.file_path) {
+            photoUrl = `https://api.telegram.org/file/bot${env.BOT_TOKEN_USER}/${fileInfo.file_path}`;
+          }
+        } catch (fileErr) {
+          console.warn('Could not get photo url from user bot:', fileErr);
         }
+
+        for (const adm of admins) {
+          try {
+            if (photoUrl) {
+              await adminBot.api.sendPhoto(adm.telegram_id, photoUrl, {
+                caption,
+                parse_mode: 'HTML',
+                reply_markup: adminKeyboard,
+              });
+            } else {
+              await adminBot.api.sendMessage(adm.telegram_id, caption, {
+                parse_mode: 'HTML',
+                reply_markup: adminKeyboard,
+              });
+            }
+          } catch (sendErr) {
+            console.error(`Failed to send photo to admin ${adm.telegram_id}, trying text fallback:`, sendErr);
+            // Fallback pesan teks jika sendPhoto gagal
+            await adminBot.api.sendMessage(adm.telegram_id, caption, {
+              parse_mode: 'HTML',
+              reply_markup: adminKeyboard,
+            }).catch(() => {});
+          }
+        }
+      } else {
+        console.warn('⚠️ Tidak ada admin terdaftar untuk menerima bukti pembayaran.');
       }
 
       await ctx.reply(
@@ -456,6 +486,15 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       );
     } catch (err) {
       console.error('Error forwarding payment proof to admin:', err);
+      await notifyAdminsOnError({
+        source: 'Upload Bukti Pembayaran (message:photo)',
+        error: err,
+        ctxInfo: {
+          userId: from.id,
+          username: from.username,
+          messageText: ctx.message.caption || '[Foto Bukti Pembayaran]',
+        },
+      });
       await ctx.reply('⚠️ Terjadi kendala saat meneruskan bukti transfer ke admin. Silakan coba lagi.');
     }
   });
