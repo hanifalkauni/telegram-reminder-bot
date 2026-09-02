@@ -57,15 +57,23 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
       `<b>Ingatin</b> adalah asisten pintar Telegram untuk memantau tanggal jatuh tempo dokumen, STNK, SIM, garansi, tagihan, servis berkala, dan hari spesial Anda secara otomatis.\n\n` +
       `🔔 <b>Waktu Notifikasi Harian:</b>\n` +
       `Pengingat otomatis dikirimkan setiap hari tepat pukul <b>07:00 WIB</b>.\n\n` +
-      `📅 <b>Standar Jadwal Pengingat per Kategori:</b>\n` +
-      `• 🚗 <b>Pajak STNK & SIM Kendaraan:</b> <code>H-30, H-14, H-7, H-3, H-1, Hari H</code>\n` +
-      `• 🎂 <b>Ulang Tahun & Hari Spesial:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
-      `• 💻 <b>Masa Garansi Gadget/Elektronik:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n` +
-      `• 📄 <b>Paspor, Visa & Lisensi Legal:</b> <code>H-60, H-30, H-14, H-7, Hari H</code>\n` +
-      `• 💳 <b>Tagihan, Kos & Kartu ATM:</b> <code>H-7, H-3, H-1, Hari H</code>\n` +
-      `• 🛠️ <b>Servis AC, Ganti Oli & Rumah:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
-      `• 🕊️ <b>Ibadah, Donasi & Hari Keagamaan:</b> <code>H-14, H-7, H-3, H-1, Hari H</code>\n` +
-      `• 🏥 <b>Polis Asuransi & Kesehatan:</b> <code>H-30, H-14, H-7, H-1, Hari H</code>\n\n` +
+      `📅 <b>Standar Jadwal Pengingat per Kategori:</b>\n\n` +
+      `🚗 <b>Pajak STNK & SIM Kendaraan</b>\n` +
+      `└ <code>H-30, H-14, H-7, H-3, H-1, Hari H</code>\n\n` +
+      `🎂 <b>Ulang Tahun & Hari Spesial</b>\n` +
+      `└ <code>H-14, H-7, H-3, H-1, Hari H</code>\n\n` +
+      `💻 <b>Masa Garansi Gadget & Elektronik</b>\n` +
+      `└ <code>H-30, H-14, H-7, H-1, Hari H</code>\n\n` +
+      `📄 <b>Paspor, Visa & Lisensi Legal</b>\n` +
+      `└ <code>H-60, H-30, H-14, H-7, Hari H</code>\n\n` +
+      `💳 <b>Tagihan, Kos & Kartu ATM</b>\n` +
+      `└ <code>H-7, H-3, H-1, Hari H</code>\n\n` +
+      `🛠️ <b>Servis AC, Ganti Oli & Rumah</b>\n` +
+      `└ <code>H-14, H-7, H-3, H-1, Hari H</code>\n\n` +
+      `🕊️ <b>Ibadah, Donasi & Hari Keagamaan</b>\n` +
+      `└ <code>H-14, H-7, H-3, H-1, Hari H</code>\n\n` +
+      `🏥 <b>Polis Asuransi & Kesehatan</b>\n` +
+      `└ <code>H-30, H-14, H-7, H-1, Hari H</code>\n\n` +
       `🔒 <b>Privasi & Keamanan:</b>\n` +
       `Data pengingat Anda tersimpan secara privat khusus untuk akun Telegram Anda dan tidak pernah dibagikan kepada pihak ketiga.`;
 
