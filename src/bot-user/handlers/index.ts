@@ -1,6 +1,6 @@
 import { Bot, InlineKeyboard, InputFile } from 'grammy';
 import { UserBotContext } from '../conversations/addReminderWizard.js';
-import { checkUserAccess } from '../../services/accessControl.js';
+import { checkUserAccess, getOrCreateUser } from '../../services/accessControl.js';
 import {
   getReminderById,
   deleteReminder,
@@ -11,7 +11,8 @@ import {
 } from '../../services/reminderService.js';
 import {
   getActivePackages,
-  getActivePaymentMethods
+  getActivePaymentMethods,
+  redeemCode
 } from '../../services/subscriptionService.js';
 import { notifyAdminsOnError } from '../../services/errorAlertService.js';
 import { supabase } from '../../db/supabase.js';
@@ -527,5 +528,47 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       });
       await ctx.reply('⚠️ Terjadi kendala saat meneruskan bukti transfer ke admin. Silakan coba lagi.');
     }
+  });
+
+  // 5. Automatic Voucher Code Detection / Interactive Redeem Reply
+  bot.on('message:text', async (ctx, next) => {
+    const text = ctx.message.text.trim();
+    if (text.startsWith('/')) {
+      return next();
+    }
+
+    const from = ctx.from;
+    if (!from) return next();
+
+    const isAwaiting = Boolean(ctx.session?.awaitingRedeemCode);
+    const looksLikeVoucher = /^[A-Za-z0-9]{6,12}$/.test(text);
+
+    if (isAwaiting || looksLikeVoucher) {
+      const user = await getOrCreateUser({
+        id: from.id,
+        username: from.username,
+        first_name: from.first_name,
+        last_name: from.last_name,
+      });
+
+      const result = await redeemCode(text, user.id);
+      if (result.success) {
+        ctx.session.awaitingRedeemCode = false;
+        await ctx.reply(
+          `🎉 <b>Aktivasi Berhasil!</b>\n\n${result.message}\nAkun Anda kini dapat menyimpan reminder tanpa batas.`,
+          {
+            parse_mode: 'HTML',
+            reply_markup: new InlineKeyboard().text('➕ Tambah Reminder', 'action:add_reminder'),
+          }
+        );
+        return;
+      } else if (isAwaiting) {
+        ctx.session.awaitingRedeemCode = false;
+        await ctx.reply(`❌ <b>Gagal:</b> ${result.message}`, { parse_mode: 'HTML' });
+        return;
+      }
+    }
+
+    return next();
   });
 }

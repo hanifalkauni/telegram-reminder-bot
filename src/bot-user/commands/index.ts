@@ -284,13 +284,17 @@ export function registerUserCommands(bot: Bot<UserBotContext>): void {
 
     const codeInput = ctx.match?.trim();
     if (!codeInput) {
+      ctx.session.awaitingRedeemCode = true;
       await ctx.reply(
-        'ℹ️ <b>Format Perintah:</b>\nKetik <code>/redeem KODE_VOUCHER</code>\n\n<i>Contoh: <code>/redeem K7X9PQ2M</code></i>',
+        '🎟️ <b>Aktivasi Voucher Langganan Ingatin</b>\n\n' +
+          'Silakan kirimkan <b>kode voucher</b> Anda (Contoh: <code>PYLFKHHD</code>):\n\n' +
+          '<i>(Ketik langsung kode voucher di chat ini atau balas pesan ini)</i>',
         { parse_mode: 'HTML' }
       );
       return;
     }
 
+    ctx.session.awaitingRedeemCode = false;
     const result = await redeemCode(codeInput, user.id);
     if (result.success) {
       await ctx.reply(`🎉 <b>Aktivasi Berhasil!</b>\n\n${result.message}\nAkun Anda kini dapat menyimpan reminder tanpa batas.`, {

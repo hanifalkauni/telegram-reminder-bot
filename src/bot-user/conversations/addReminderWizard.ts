@@ -10,6 +10,7 @@ export interface SessionData {
   selectedPackageName?: string;
   selectedPackageDuration?: number;
   selectedPackagePrice?: number;
+  awaitingRedeemCode?: boolean;
 }
 
 export type UserBotContext = Context & ConversationFlavor & SessionFlavor<SessionData>;
