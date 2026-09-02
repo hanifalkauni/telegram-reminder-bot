@@ -54,7 +54,7 @@ export async function addReminderWizard(
   categoryKeyboard.row().text('❌ Batalkan', 'wizard_cancel');
 
   const catPromptMsg = await ctx.reply(
-    '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\nSilakan pilih jenis item yang ingin diingatkan:\n<i>(Ketik /batal atau klik tombol di bawah untuk membatalkan kapan saja)</i>',
+    '📝 <b>Langkah 1 dari 7: Pilih Kategori Item</b>\n\nSilakan pilih jenis item yang ingin diingatkan:\n<i>(Ketik /batal atau klik tombol di bawah untuk membatalkan kapan saja)</i>',
     { parse_mode: 'HTML', reply_markup: categoryKeyboard }
   );
 
@@ -66,7 +66,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         catPromptMsg.message_id,
-        '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '📝 <b>Langkah 1 dari 7: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -75,7 +75,7 @@ export async function addReminderWizard(
     await ctx.api.editMessageText(
       chatId,
       catPromptMsg.message_id,
-      '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+      '📝 <b>Langkah 1 dari 7: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
       { parse_mode: 'HTML' }
     ).catch(() => {});
     return;
@@ -96,16 +96,16 @@ export async function addReminderWizard(
   await ctx.api.editMessageText(
     chatId,
     catPromptMsg.message_id,
-    `📝 <b>Langkah 1 dari 6: Kategori Item</b>\n\n✅ <i>Kategori dipilih:</i> <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>`,
+    `📝 <b>Langkah 1 dari 7: Kategori Item</b>\n\n✅ <i>Kategori dipilih:</i> <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>`,
     { parse_mode: 'HTML' }
   ).catch(() => {});
 
   // 3. Langkah 2: Input Judul / Nama Item
-  let titlePrompt = `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
+  let titlePrompt = `📌 <b>Langkah 2 dari 7: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
   if (isBirthday) {
-    titlePrompt = `🎂 <b>Langkah 2 dari 6: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`;
+    titlePrompt = `🎂 <b>Langkah 2 dari 7: Nama Orang / Momen Spesial</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama orang atau momen (misal: <i>"Ulang Tahun Istri"</i>, <i>"Ulang Tahun Ibu"</i>, atau <i>"Anniversary Pernikahan"</i>):`;
   } else if (isSpiritual) {
-    titlePrompt = `🕊️ <b>Langkah 2 dari 6: Nama Ibadah / Donasi / Hari Suci</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda (misal: <i>"Natal & Paskah"</i>, <i>"Kurban Idul Adha"</i>, <i>"Persepuluhan / Zakat"</i>, <i>"Nyepi / Waisak"</i>, atau <i>"Donasi Rutin"</i>):`;
+    titlePrompt = `🕊️ <b>Langkah 2 dari 7: Nama Ibadah / Donasi / Hari Suci</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama agenda (misal: <i>"Natal & Paskah"</i>, <i>"Kurban Idul Adha"</i>, <i>"Persepuluhan / Zakat"</i>, <i>"Nyepi / Waisak"</i>, atau <i>"Donasi Rutin"</i>):`;
   }
 
   const titlePromptMsg = await ctx.reply(titlePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
@@ -118,7 +118,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         titlePromptMsg.message_id,
-        '📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '📌 <b>Langkah 2 dari 7: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -130,7 +130,7 @@ export async function addReminderWizard(
     await ctx.api.editMessageText(
       chatId,
       titlePromptMsg.message_id,
-      '📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+      '📌 <b>Langkah 2 dari 7: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
       { parse_mode: 'HTML' }
     ).catch(() => {});
     return;
@@ -141,14 +141,14 @@ export async function addReminderWizard(
   await ctx.api.editMessageText(
     chatId,
     titlePromptMsg.message_id,
-    `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n✅ <i>Judul item:</i> <b>${escapeHTML(title)}</b>`,
+    `📌 <b>Langkah 2 dari 7: Nama / Judul Item</b>\n\n✅ <i>Judul item:</i> <b>${escapeHTML(title)}</b>`,
     { parse_mode: 'HTML' }
   ).catch(() => {});
 
   // 4. Langkah 3: Input Tanggal Jatuh Tempo
   const datePrompt = isBirthday
-    ? `📅 <b>Langkah 3 dari 6: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
-    : `📅 <b>Langkah 3 dari 6: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
+    ? `📅 <b>Langkah 3 dari 7: Tanggal Ulang Tahun / Hari Spesial</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>15/10/1995</code> atau <code>15-10-2026</code></i>`
+    : `📅 <b>Langkah 3 dari 7: Tanggal Kedaluwarsa / Jatuh Tempo</b>\n\nItem: <b>${escapeHTML(title)}</b>\n\nKetikkan tanggalnya (Format: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>):\n<i>Contoh: <code>2026-12-31</code> atau <code>31/12/2026</code></i>`;
 
   let datePromptMsg = await ctx.reply(datePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
@@ -162,7 +162,7 @@ export async function addReminderWizard(
         await ctx.api.editMessageText(
           chatId,
           datePromptMsg.message_id,
-          '📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+          '📅 <b>Langkah 3 dari 7: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
           { parse_mode: 'HTML' }
         ).catch(() => {});
         return;
@@ -174,7 +174,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         datePromptMsg.message_id,
-        '📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '📅 <b>Langkah 3 dari 7: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -187,7 +187,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         datePromptMsg.message_id,
-        `📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n✅ <i>Tanggal:</i> <b>${formatDateID(validDateStr)}</b>`,
+        `📅 <b>Langkah 3 dari 7: Tanggal Jatuh Tempo</b>\n\n✅ <i>Tanggal:</i> <b>${formatDateID(validDateStr)}</b>`,
         { parse_mode: 'HTML' }
       ).catch(() => {});
     } else {
@@ -222,7 +222,7 @@ export async function addReminderWizard(
       .text('❌ Batalkan Penambahan', 'wizard_cancel');
 
     const recPromptMsg = await ctx.reply(
-      '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
+      '🔄 <b>Langkah 4 dari 7: Siklus Perulangan</b>\n\nApakah pengingat ini berulang secara berkala?\n<i>(Jika berulang, bot otomatis memajukan tanggal ke siklus berikutnya setelah hari H)</i>',
       { parse_mode: 'HTML', reply_markup: recurringKeyboard }
     );
 
@@ -234,7 +234,7 @@ export async function addReminderWizard(
         await ctx.api.editMessageText(
           chatId,
           recPromptMsg.message_id,
-          '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+          '🔄 <b>Langkah 4 dari 7: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
           { parse_mode: 'HTML' }
         ).catch(() => {});
         return;
@@ -246,7 +246,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         recPromptMsg.message_id,
-        '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '🔄 <b>Langkah 4 dari 7: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -266,12 +266,137 @@ export async function addReminderWizard(
     await ctx.api.editMessageText(
       chatId,
       recPromptMsg.message_id,
-      `🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n✅ <i>Pilihan:</i> <b>${recLabelMap[recurringType] || recurringType}</b>`,
+      `🔄 <b>Langkah 4 dari 7: Siklus Perulangan</b>\n\n✅ <i>Pilihan:</i> <b>${recLabelMap[recurringType] || recurringType}</b>`,
       { parse_mode: 'HTML' }
     ).catch(() => {});
   }
 
-  // 6. Langkah 5: Estimasi Biaya / Anggaran (Opsional)
+  // 6. Langkah 5: Pilihan Waktu Pengingat (Custom Interval Alert)
+  const defaultIntervals = selectedCat?.default_reminder_days || [30, 14, 7, 3, 1, 0];
+  const formatIntervalsText = (arr: number[]) =>
+    arr
+      .slice()
+      .sort((a, b) => b - a)
+      .map((d) => (d === 0 ? 'Hari H' : `H-${d}`))
+      .join(', ');
+
+  const defaultFormatted = formatIntervalsText(defaultIntervals);
+  let reminderIntervals: number[] = defaultIntervals;
+
+  const intervalKeyboard = new InlineKeyboard()
+    .text(`✅ Standar: ${defaultFormatted.length > 25 ? defaultFormatted.substring(0, 24) + '...' : defaultFormatted}`, 'int:DEFAULT').row()
+    .text('⚡ Ringkas (H-7, H-1, Hari H)', 'int:COMPACT')
+    .text('🎯 Hari H Saja (0)', 'int:ONLY_DUE').row()
+    .text('✏️ Kustom H- Sendiri', 'int:CUSTOM').row()
+    .text('❌ Batalkan Penambahan', 'wizard_cancel');
+
+  const intPromptMsg = await ctx.reply(
+    `🔔 <b>Langkah 5 dari 7: Waktu Pengingat (Interval Alert)</b>\n\n` +
+      `Kapan saja Anda ingin diingatkan menjelang jatuh tempo?\n` +
+      `<i>(Standar Kategori: <code>${defaultFormatted}</code> pukul 07:00 WIB)</i>`,
+    { parse_mode: 'HTML', reply_markup: intervalKeyboard }
+  );
+
+  const intResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
+
+  let isCustom = false;
+  if (intResponse.callbackQuery) {
+    await intResponse.answerCallbackQuery();
+    if (intResponse.callbackQuery.data === 'wizard_cancel') {
+      await ctx.api.editMessageText(
+        chatId,
+        intPromptMsg.message_id,
+        '🔔 <b>Langkah 5 dari 7: Waktu Pengingat</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+      return;
+    }
+
+    const data = intResponse.callbackQuery.data;
+    if (data === 'int:DEFAULT') {
+      reminderIntervals = defaultIntervals;
+    } else if (data === 'int:COMPACT') {
+      reminderIntervals = [7, 1, 0];
+    } else if (data === 'int:ONLY_DUE') {
+      reminderIntervals = [0];
+    } else if (data === 'int:CUSTOM') {
+      isCustom = true;
+    }
+  } else if (intResponse.message?.text && isCancelInput(intResponse.message.text)) {
+    await ctx.api.editMessageText(
+      chatId,
+      intPromptMsg.message_id,
+      '🔔 <b>Langkah 5 dari 7: Waktu Pengingat</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
+    return;
+  }
+
+  if (isCustom) {
+    const customPromptMsg = await ctx.reply(
+      `✏️ <b>Kustom Hari Pengingat (H-)</b>\n\n` +
+        `Ketikkan angka hari H- sebelum jatuh tempo yang Anda inginkan (dipisahkan koma atau spasi).\n\n` +
+        `<i>Contoh:</i> <code>60, 30, 14, 7, 1, 0</code>\n` +
+        `<i>(Keterangan: Angka <code>0</code> = tepat Hari H)</i>`,
+      {
+        parse_mode: 'HTML',
+        reply_markup: new InlineKeyboard().text('❌ Batalkan', 'wizard_cancel'),
+      }
+    );
+
+    const customResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
+    if (customResponse.callbackQuery) {
+      await customResponse.answerCallbackQuery();
+      await ctx.api.editMessageText(
+        chatId,
+        customPromptMsg.message_id,
+        '🔔 <b>Kustom Hari Pengingat</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+      return;
+    }
+
+    if (customResponse.message?.text) {
+      if (isCancelInput(customResponse.message.text)) {
+        await ctx.api.editMessageText(
+          chatId,
+          customPromptMsg.message_id,
+          '🔔 <b>Kustom Hari Pengingat</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+          { parse_mode: 'HTML' }
+        ).catch(() => {});
+        return;
+      }
+
+      const rawText = customResponse.message.text;
+      const parsedDays = rawText
+        .split(/[,|\s]+/)
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n) && n >= 0 && n <= 365);
+
+      if (parsedDays.length > 0) {
+        reminderIntervals = Array.from(new Set(parsedDays)).sort((a, b) => b - a);
+      } else {
+        reminderIntervals = defaultIntervals;
+      }
+
+      await ctx.api.editMessageText(
+        chatId,
+        customPromptMsg.message_id,
+        `✏️ <b>Kustom Hari Pengingat</b>\n\n✅ <i>Disimpan:</i> <code>${formatIntervalsText(reminderIntervals)}</code>`,
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
+    }
+  }
+
+  // Update pesan prompt langkah 5 dengan interval yang dipilih
+  await ctx.api.editMessageText(
+    chatId,
+    intPromptMsg.message_id,
+    `🔔 <b>Langkah 5 dari 7: Waktu Pengingat</b>\n\n✅ <i>Jadwal:</i> <code>${formatIntervalsText(reminderIntervals)} (07:00 WIB)</code>`,
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
+
+  // 7. Langkah 6: Estimasi Biaya / Anggaran (Opsional)
   let estimatedCost = 0;
   const skipCostKeyboard = new InlineKeyboard()
     .text('⏩ Lewati Biaya (Rp 0)', 'wizard_skip_cost')
@@ -279,7 +404,7 @@ export async function addReminderWizard(
     .text('❌ Batalkan', 'wizard_cancel');
 
   const costPromptMsg = await ctx.reply(
-    `💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana (Opsional)</b>\n\nKetikkan perkiraan nominal biaya (misal: <code>150000</code>, <code>2500000</code>) untuk membantu menyiapkan dana saat jatuh tempo.\nAtau tekan tombol di bawah untuk melewati:`,
+    `💵 <b>Langkah 6 dari 7: Estimasi Biaya / Dana (Opsional)</b>\n\nKetikkan perkiraan nominal biaya (misal: <code>150000</code>, <code>2500000</code>) untuk membantu menyiapkan dana saat jatuh tempo.\nAtau tekan tombol di bawah untuk melewati:`,
     { parse_mode: 'HTML', reply_markup: skipCostKeyboard }
   );
 
@@ -291,7 +416,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         costPromptMsg.message_id,
-        '💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '💵 <b>Langkah 6 dari 7: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -302,7 +427,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         costPromptMsg.message_id,
-        '💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '💵 <b>Langkah 6 dari 7: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -317,23 +442,23 @@ export async function addReminderWizard(
     ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(estimatedCost)
     : 'Rp 0 (Dilewati)';
 
-  // Update pesan prompt langkah 5 dengan biaya yang diinput
+  // Update pesan prompt langkah 6 dengan biaya yang diinput
   await ctx.api.editMessageText(
     chatId,
     costPromptMsg.message_id,
-    `💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n✅ <i>Estimasi biaya:</i> <b>${costDisplay}</b>`,
+    `💵 <b>Langkah 6 dari 7: Estimasi Biaya / Dana</b>\n\n✅ <i>Estimasi biaya:</i> <b>${costDisplay}</b>`,
     { parse_mode: 'HTML' }
   ).catch(() => {});
 
-  // 7. Langkah 6: Catatan Tambahan (Opsional) atau Foto
+  // 8. Langkah 7: Catatan Tambahan (Opsional) atau Foto
   const skipNotesKeyboard = new InlineKeyboard()
     .text('⏩ Lewati Catatan & Simpan', 'wizard_skip_notes')
     .row()
     .text('❌ Batalkan', 'wizard_cancel');
 
   const notesPrompt = isBirthday
-    ? `🎁 <b>Langkah 6 dari 6: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
-    : `📝 <b>Langkah 6 dari 6: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
+    ? `🎁 <b>Langkah 7 dari 7: Ide Kado / Catatan (Opsional)</b>\n\nKetikkan ide kado, ukuran baju/sepatu, wishlist, atau foto kenangan.\nAtau tekan tombol di bawah untuk melewati:`
+    : `📝 <b>Langkah 7 dari 7: Catatan Tambahan (Opsional)</b>\n\nKetikkan catatan tambahan (nomor seri, tempat servis, no. polis) atau kirim foto nota/kartu garansi.\nAtau tekan tombol di bawah untuk melewati:`;
 
   const notesPromptMsg = await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipNotesKeyboard });
 
@@ -348,7 +473,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         notesPromptMsg.message_id,
-        '📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '📝 <b>Langkah 7 dari 7: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -359,7 +484,7 @@ export async function addReminderWizard(
       await ctx.api.editMessageText(
         chatId,
         notesPromptMsg.message_id,
-        '📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        '📝 <b>Langkah 7 dari 7: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
         { parse_mode: 'HTML' }
       ).catch(() => {});
       return;
@@ -375,15 +500,15 @@ export async function addReminderWizard(
 
   const noteDisplay = notes ? escapeHTML(notes) : (photoFileId ? '📷 <i>Foto lampiran tersimpan</i>' : '<i>(Dilewati)</i>');
 
-  // Update pesan prompt langkah 6 dengan catatan yang diinput
+  // Update pesan prompt langkah 7 dengan catatan yang diinput
   await ctx.api.editMessageText(
     chatId,
     notesPromptMsg.message_id,
-    `📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n✅ <i>Catatan:</i> ${noteDisplay}`,
+    `📝 <b>Langkah 7 dari 7: Catatan Tambahan</b>\n\n✅ <i>Catatan:</i> ${noteDisplay}`,
     { parse_mode: 'HTML' }
   ).catch(() => {});
 
-  // 8. Simpan ke Database Supabase
+  // 9. Simpan ke Database Supabase
   const createdItem = await conversation.external(() =>
     createReminder({
       userId: access.user.id,
@@ -392,7 +517,7 @@ export async function addReminderWizard(
       notes,
       dueDate: validDateStr!,
       estimatedCost,
-      reminderIntervals: selectedCat?.default_reminder_days || [30, 7, 3, 1, 0],
+      reminderIntervals,
       photoFileId,
       isRecurring: recurringType !== 'NONE',
       recurringType,
@@ -416,6 +541,8 @@ export async function addReminderWizard(
     successMsg += `🔄 Perulangan: <b>${recLabelMap[recurringType]} (Otomatis)</b>\n`;
   }
 
+  successMsg += `🔔 Jadwal Pengingat: <code>${formatIntervalsText(createdItem.reminder_intervals || reminderIntervals)} (07:00 WIB)</code>\n`;
+
   if (estimatedCost > 0) {
     const costFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(estimatedCost);
     successMsg += `💵 Estimasi Biaya: <b>${costFormatted}</b>\n`;
@@ -426,9 +553,9 @@ export async function addReminderWizard(
   }
 
   if (isBirthday) {
-    successMsg += `\n🎂 <i>Pengingat ini berulang otomatis setiap tahun! Bot akan mengingatkan pada H-14, H-7, H-3, H-1, dan Hari H.</i>`;
+    successMsg += `\n🎂 <i>Pengingat ini berulang otomatis setiap tahun!</i>`;
   } else {
-    successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda menjelang jatuh tempo!</i>`;
+    successMsg += `\n⏰ <i>Bot otomatis mengingatkan Anda sesuai jadwal di atas!</i>`;
   }
 
   const gcalUrl = generateGoogleCalendarUrl(createdItem.title, createdItem.due_date, createdItem.notes);
