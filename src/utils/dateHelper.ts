@@ -38,17 +38,34 @@ export function getDaysDifference(targetDateStr: string): number {
   return Math.round(diffTime / (1000 * 60 * 60 * 24));
 }
 
+const MONTH_MAP_ID: Record<string, number> = {
+  januari: 1, jan: 1,
+  februari: 2, feb: 2, pebruari: 2,
+  maret: 3, mar: 3,
+  april: 4, apr: 4,
+  mei: 5, may: 5,
+  juni: 6, jun: 6,
+  juli: 7, jul: 7,
+  agustus: 8, agu: 8, ags: 8, agt: 8,
+  september: 9, sep: 9, sept: 9,
+  oktober: 10, okt: 10, oct: 10,
+  november: 11, nov: 11, nopember: 11,
+  desember: 12, des: 12, dec: 12,
+};
+
 /**
  * Parse input tanggal fleksibel dari user:
- * - YYYY-MM-DD (2026-12-31)
- * - DD/MM/YYYY (31/12/2026)
- * - DD-MM-YYYY (31-12-2026)
+ * - YYYY-MM-DD (2026-12-31, 1996-06-01)
+ * - DD/MM/YYYY atau DD-MM-YYYY (01/06/1996, 1/6/1996, 31/12/2026)
+ * - DD/MM atau DD-MM (01/06, 15/10) -> Otomatis tahun saat ini
+ * - Format teks Indonesia: "1 Juni 1996", "15 Oktober", "31 Des 2026"
  * Return: string "YYYY-MM-DD" atau null jika tidak valid
  */
 export function parseDateInput(input: string): string | null {
-  const cleaned = input.trim();
+  const cleaned = input.trim().toLowerCase();
+  const currentYear = new Date().getFullYear();
   
-  // Format YYYY-MM-DD
+  // 1. Format YYYY-MM-DD
   const isoMatch = cleaned.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
   if (isoMatch) {
     const year = parseInt(isoMatch[1], 10);
@@ -59,13 +76,35 @@ export function parseDateInput(input: string): string | null {
     }
   }
 
-  // Format DD-MM-YYYY atau DD/MM/YYYY
-  const idMatch = cleaned.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
-  if (idMatch) {
-    const day = parseInt(idMatch[1], 10);
-    const month = parseInt(idMatch[2], 10);
-    const year = parseInt(idMatch[3], 10);
+  // 2. Format DD-MM-YYYY atau DD/MM/YYYY (contoh: 01/06/1996, 1/6/1996)
+  const idFullMatch = cleaned.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (idFullMatch) {
+    const day = parseInt(idFullMatch[1], 10);
+    const month = parseInt(idFullMatch[2], 10);
+    const year = parseInt(idFullMatch[3], 10);
     if (isValidDate(year, month, day)) {
+      return `${year}-${padZero(month)}-${padZero(day)}`;
+    }
+  }
+
+  // 3. Format DD/MM atau DD-MM tanpa tahun (contoh: 01/06, 15/10)
+  const idShortMatch = cleaned.match(/^(\d{1,2})[-/.](\d{1,2})$/);
+  if (idShortMatch) {
+    const day = parseInt(idShortMatch[1], 10);
+    const month = parseInt(idShortMatch[2], 10);
+    if (isValidDate(currentYear, month, day)) {
+      return `${currentYear}-${padZero(month)}-${padZero(day)}`;
+    }
+  }
+
+  // 4. Format teks Indonesia (contoh: "1 Juni 1996", "15 Oktober", "31 Des 2026")
+  const textMatch = cleaned.match(/^(\d{1,2})\s+([a-z]+)(?:\s+(\d{4}))?$/);
+  if (textMatch) {
+    const day = parseInt(textMatch[1], 10);
+    const monthStr = textMatch[2];
+    const year = textMatch[3] ? parseInt(textMatch[3], 10) : currentYear;
+    const month = MONTH_MAP_ID[monthStr];
+    if (month && isValidDate(year, month, day)) {
       return `${year}-${padZero(month)}-${padZero(day)}`;
     }
   }
@@ -74,7 +113,7 @@ export function parseDateInput(input: string): string | null {
 }
 
 function isValidDate(year: number, month: number, day: number): boolean {
-  if (year < 2000 || year > 2100) return false;
+  if (year < 1900 || year > 2100) return false;
   if (month < 1 || month > 12) return false;
   if (day < 1 || day > 31) return false;
   const d = new Date(year, month - 1, day);
