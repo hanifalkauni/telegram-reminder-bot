@@ -278,16 +278,21 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     const success = await deleteReminder(reminderId, access.user.id);
 
     if (success) {
-      await ctx.reply('🗑️ <b>Item pengingat berhasil dihapus.</b>', {
-        parse_mode: 'HTML',
-        reply_markup: new InlineKeyboard().text('📋 Lihat Daftar Sisa', 'action:list_reminders'),
-      });
+      const deleteText = '🗑️ <b>Item pengingat berhasil dihapus.</b>';
+      const keyboard = new InlineKeyboard().text('📋 Lihat Daftar Sisa', 'action:list_reminders');
+      if (ctx.callbackQuery.message?.caption) {
+        await ctx.editMessageCaption({ caption: deleteText, parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {});
+      } else {
+        await ctx.editMessageText(deleteText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(async () => {
+          await ctx.reply(deleteText, { parse_mode: 'HTML', reply_markup: keyboard });
+        });
+      }
     } else {
       await ctx.reply('⚠️ Gagal menghapus item.');
     }
   });
 
-  // Quick Renew (+1 bln, +3 bln, +6 bln, +12 bln)
+  // Quick Renew (+1 bln, +3 bln, +6 bln, +12 bln, +60 bln)
   bot.callbackQuery(/^action:renew_months:(\d+):(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const reminderId = parseInt(ctx.match[1], 10);
@@ -299,11 +304,20 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     const updated = await renewReminderByMonths(reminderId, access.user.id, months);
 
     if (updated) {
-      const label = months === 12 ? '1 Tahun' : `${months} Bulan`;
-      await ctx.reply(
-        `🔄 <b>Jatuh tempo berhasil diperpanjang ${label}!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
-        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
-      );
+      const label = months === 60 ? '5 Tahun' : months === 12 ? '1 Tahun' : `${months} Bulan`;
+      const renewText = `🔄 <b>Jatuh tempo berhasil diperpanjang ${label}!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`;
+      const keyboard = new InlineKeyboard()
+        .text('🔍 Lihat Item Ini', `action:view:${updated.id}`)
+        .row()
+        .text('📋 Lihat Semua Daftar', 'action:list_reminders');
+
+      if (ctx.callbackQuery.message?.caption) {
+        await ctx.editMessageCaption({ caption: renewText, parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {});
+      } else {
+        await ctx.editMessageText(renewText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(async () => {
+          await ctx.reply(renewText, { parse_mode: 'HTML', reply_markup: keyboard });
+        });
+      }
     } else {
       await ctx.reply('⚠️ Gagal memperpanjang tanggal item.');
     }
@@ -319,10 +333,15 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     const updated = await renewReminderDate(reminderId, access.user.id, 1);
 
     if (updated) {
-      await ctx.reply(
-        `🔄 <b>Jatuh tempo berhasil diperpanjang 1 tahun!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
-        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
-      );
+      const renewText = `🔄 <b>Jatuh tempo berhasil diperpanjang 1 tahun!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`;
+      const keyboard = new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders');
+      if (ctx.callbackQuery.message?.caption) {
+        await ctx.editMessageCaption({ caption: renewText, parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {});
+      } else {
+        await ctx.editMessageText(renewText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(async () => {
+          await ctx.reply(renewText, { parse_mode: 'HTML', reply_markup: keyboard });
+        });
+      }
     } else {
       await ctx.reply('⚠️ Gagal memperpanjang tanggal item.');
     }
@@ -338,10 +357,15 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     const updated = await snoozeReminder(reminderId, access.user.id, 7);
 
     if (updated) {
-      await ctx.reply(
-        `⏸️ <b>Pengingat ditunda 7 hari ke depan!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`,
-        { parse_mode: 'HTML', reply_markup: new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders') }
-      );
+      const snoozeText = `⏸️ <b>Pengingat ditunda 7 hari ke depan!</b>\n\nTanggal Baru: <b>${formatDateID(updated.due_date)}</b>`;
+      const keyboard = new InlineKeyboard().text('📋 Lihat Daftar', 'action:list_reminders');
+      if (ctx.callbackQuery.message?.caption) {
+        await ctx.editMessageCaption({ caption: snoozeText, parse_mode: 'HTML', reply_markup: keyboard }).catch(() => {});
+      } else {
+        await ctx.editMessageText(snoozeText, { parse_mode: 'HTML', reply_markup: keyboard }).catch(async () => {
+          await ctx.reply(snoozeText, { parse_mode: 'HTML', reply_markup: keyboard });
+        });
+      }
     } else {
       await ctx.reply('⚠️ Gagal menunda pengingat.');
     }

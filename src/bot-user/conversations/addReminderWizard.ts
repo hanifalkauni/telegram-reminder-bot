@@ -15,7 +15,8 @@ function isCancelInput(text?: string): boolean {
 }
 
 /**
- * Interactive Wizard untuk menambah item reminder baru (Auto-hide button setelah diklik)
+ * Interactive Wizard untuk menambah item reminder baru
+ * - Auto-hide & update message dengan info pilihan tombol yang dipilih
  */
 export async function addReminderWizard(
   conversation: UserBotConversation,
@@ -51,21 +52,30 @@ export async function addReminderWizard(
   );
 
   const catResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
-  // Auto-hide buttons pada prompt langkah 1
-  await ctx.api.editMessageReplyMarkup(chatId, catPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
   if (catResponse.callbackQuery) {
     await catResponse.answerCallbackQuery();
     if (catResponse.callbackQuery.data === 'wizard_cancel') {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        catPromptMsg.message_id,
+        '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
   } else if (catResponse.message?.text && isCancelInput(catResponse.message.text)) {
-    await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+    await ctx.api.editMessageText(
+      chatId,
+      catPromptMsg.message_id,
+      '📝 <b>Langkah 1 dari 6: Pilih Kategori Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
     return;
   }
 
   if (!catResponse.callbackQuery?.data?.startsWith('wizard_cat:')) {
+    await ctx.api.editMessageReplyMarkup(chatId, catPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
     await ctx.reply('❌ <b>Proses dibatalkan.</b> Silakan ketik /add untuk memulai kembali.', { parse_mode: 'HTML' });
     return;
   }
@@ -74,6 +84,14 @@ export async function addReminderWizard(
   const selectedCat = categories.find((c) => c.id === categoryId);
   const isBirthday = selectedCat?.code === 'birthday';
   const isSpiritual = selectedCat?.code === 'spiritual';
+
+  // Update pesan prompt langkah 1 dengan kategori yang dipilih dan hapus button
+  await ctx.api.editMessageText(
+    chatId,
+    catPromptMsg.message_id,
+    `📝 <b>Langkah 1 dari 6: Kategori Item</b>\n\n✅ <i>Kategori dipilih:</i> <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>`,
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
 
   // 3. Langkah 2: Input Judul / Nama Item
   let titlePrompt = `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\nKategori: <b>${selectedCat?.icon} ${escapeHTML(selectedCat?.name || '')}</b>\n\nKetikkan nama barang/dokumen/agenda (misal: <i>"Garansi Laptop Asus"</i>, <i>"Pajak STNK Honda Vario"</i>, atau <i>"Cuci AC Rumah"</i>):`;
@@ -86,23 +104,39 @@ export async function addReminderWizard(
   const titlePromptMsg = await ctx.reply(titlePrompt, { parse_mode: 'HTML', reply_markup: cancelKeyboard });
 
   const titleResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
-  // Auto-hide buttons pada prompt langkah 2
-  await ctx.api.editMessageReplyMarkup(chatId, titlePromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
   if (titleResponse.callbackQuery) {
     await titleResponse.answerCallbackQuery();
     if (titleResponse.callbackQuery.data === 'wizard_cancel') {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        titlePromptMsg.message_id,
+        '📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
   }
 
   const rawTitle = titleResponse.message?.text?.trim() || '';
   if (isCancelInput(rawTitle)) {
-    await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+    await ctx.api.editMessageText(
+      chatId,
+      titlePromptMsg.message_id,
+      '📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
     return;
   }
   const title = rawTitle;
+
+  // Update pesan prompt langkah 2 dengan judul yang diinput dan hapus button
+  await ctx.api.editMessageText(
+    chatId,
+    titlePromptMsg.message_id,
+    `📌 <b>Langkah 2 dari 6: Nama / Judul Item</b>\n\n✅ <i>Judul item:</i> <b>${escapeHTML(title)}</b>`,
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
 
   // 4. Langkah 3: Input Tanggal Jatuh Tempo
   const datePrompt = isBirthday
@@ -114,27 +148,43 @@ export async function addReminderWizard(
   let validDateStr: string | null = null;
   while (!validDateStr) {
     const dateResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
-    // Auto-hide buttons pada prompt tanggal
-    await ctx.api.editMessageReplyMarkup(chatId, datePromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
     if (dateResponse.callbackQuery) {
       await dateResponse.answerCallbackQuery();
       if (dateResponse.callbackQuery.data === 'wizard_cancel') {
-        await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+        await ctx.api.editMessageText(
+          chatId,
+          datePromptMsg.message_id,
+          '📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+          { parse_mode: 'HTML' }
+        ).catch(() => {});
         return;
       }
     }
 
     const textInput = dateResponse.message?.text?.trim() || '';
     if (isCancelInput(textInput)) {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        datePromptMsg.message_id,
+        '📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
 
     const parsed = parseDateInput(textInput);
     if (parsed) {
       validDateStr = isBirthday ? getNextUpcomingOccurrence(parsed) : parsed;
+      // Update pesan prompt langkah 3 dengan tanggal yang dipilih
+      await ctx.api.editMessageText(
+        chatId,
+        datePromptMsg.message_id,
+        `📅 <b>Langkah 3 dari 6: Tanggal Jatuh Tempo</b>\n\n✅ <i>Tanggal:</i> <b>${formatDateID(validDateStr)}</b>`,
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
     } else {
+      await ctx.api.editMessageReplyMarkup(chatId, datePromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
       datePromptMsg = await ctx.reply(
         '⚠️ <b>Format tanggal tidak valid!</b>\nMohon ketikkan format yang benar, contoh: <code>2026-12-31</code> atau <code>31/12/2026</code>\nAtau klik tombol batal di bawah:',
         { parse_mode: 'HTML', reply_markup: cancelKeyboard }
@@ -170,22 +220,48 @@ export async function addReminderWizard(
     );
 
     const recResponse = await conversation.waitFor(['callback_query:data', 'message:text']);
-    // Auto-hide buttons pada prompt langkah 4
-    await ctx.api.editMessageReplyMarkup(chatId, recPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
     if (recResponse.callbackQuery) {
       await recResponse.answerCallbackQuery();
       if (recResponse.callbackQuery.data === 'wizard_cancel') {
-        await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+        await ctx.api.editMessageText(
+          chatId,
+          recPromptMsg.message_id,
+          '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+          { parse_mode: 'HTML' }
+        ).catch(() => {});
         return;
       }
       if (recResponse.callbackQuery.data.startsWith('rec:')) {
         recurringType = recResponse.callbackQuery.data.split(':')[1] as typeof recurringType;
       }
     } else if (recResponse.message?.text && isCancelInput(recResponse.message.text)) {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        recPromptMsg.message_id,
+        '🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
+
+    const recLabelMap: Record<string, string> = {
+      NONE: '❌ Sekali Saja (Tanpa Perulangan)',
+      MONTHLY: '📅 Tiap 1 Bulan',
+      QUARTERLY: '🛠️ Tiap 3 Bulan',
+      SEMI_ANNUAL: '⚙️ Tiap 6 Bulan',
+      YEARLY: '🔄 Tiap 1 Tahun Masehi',
+      FIVE_YEARS: '🪪 Tiap 5 Tahun',
+      HIJRI_YEARLY: '🌙 Tiap 1 Tahun Hijriyah (~354 Hari)',
+    };
+
+    // Update pesan prompt langkah 4 dengan perulangan yang dipilih
+    await ctx.api.editMessageText(
+      chatId,
+      recPromptMsg.message_id,
+      `🔄 <b>Langkah 4 dari 6: Siklus Perulangan</b>\n\n✅ <i>Pilihan:</i> <b>${recLabelMap[recurringType] || recurringType}</b>`,
+      { parse_mode: 'HTML' }
+    ).catch(() => {});
   }
 
   // 6. Langkah 5: Estimasi Biaya / Anggaran (Opsional)
@@ -201,19 +277,27 @@ export async function addReminderWizard(
   );
 
   const costResponse = await conversation.waitFor(['message:text', 'callback_query:data']);
-  // Auto-hide buttons pada prompt langkah 5
-  await ctx.api.editMessageReplyMarkup(chatId, costPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
   if (costResponse.callbackQuery) {
     await costResponse.answerCallbackQuery();
     if (costResponse.callbackQuery.data === 'wizard_cancel') {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        costPromptMsg.message_id,
+        '💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
     // skip cost
   } else if (costResponse.message?.text) {
     if (isCancelInput(costResponse.message.text)) {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        costPromptMsg.message_id,
+        '💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
     const rawNumber = costResponse.message.text.replace(/[^0-9]/g, '');
@@ -221,6 +305,18 @@ export async function addReminderWizard(
       estimatedCost = parseInt(rawNumber, 10);
     }
   }
+
+  const costDisplay = estimatedCost > 0
+    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(estimatedCost)
+    : 'Rp 0 (Dilewati)';
+
+  // Update pesan prompt langkah 5 dengan biaya yang diinput
+  await ctx.api.editMessageText(
+    chatId,
+    costPromptMsg.message_id,
+    `💵 <b>Langkah 5 dari 6: Estimasi Biaya / Dana</b>\n\n✅ <i>Estimasi biaya:</i> <b>${costDisplay}</b>`,
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
 
   // 7. Langkah 6: Catatan Tambahan (Opsional) atau Foto
   const skipNotesKeyboard = new InlineKeyboard()
@@ -235,8 +331,6 @@ export async function addReminderWizard(
   const notesPromptMsg = await ctx.reply(notesPrompt, { parse_mode: 'HTML', reply_markup: skipNotesKeyboard });
 
   const notesResponse = await conversation.waitFor(['message:text', 'message:photo', 'callback_query:data']);
-  // Auto-hide buttons pada prompt langkah 6
-  await ctx.api.editMessageReplyMarkup(chatId, notesPromptMsg.message_id, { reply_markup: undefined }).catch(() => {});
 
   let notes: string | undefined;
   let photoFileId: string | undefined;
@@ -244,13 +338,23 @@ export async function addReminderWizard(
   if (notesResponse.callbackQuery) {
     await notesResponse.answerCallbackQuery();
     if (notesResponse.callbackQuery.data === 'wizard_cancel') {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        notesPromptMsg.message_id,
+        '📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
     // skip notes
   } else if (notesResponse.message?.text) {
     if (isCancelInput(notesResponse.message.text)) {
-      await ctx.reply('❌ <b>Proses penambahan pengingat dibatalkan.</b>', { parse_mode: 'HTML' });
+      await ctx.api.editMessageText(
+        chatId,
+        notesPromptMsg.message_id,
+        '📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n❌ <i>Penambahan pengingat dibatalkan.</i>',
+        { parse_mode: 'HTML' }
+      ).catch(() => {});
       return;
     }
     notes = notesResponse.message.text.trim();
@@ -261,6 +365,16 @@ export async function addReminderWizard(
       notes = notesResponse.message.caption.trim();
     }
   }
+
+  const noteDisplay = notes ? escapeHTML(notes) : (photoFileId ? '📷 <i>Foto lampiran tersimpan</i>' : '<i>(Dilewati)</i>');
+
+  // Update pesan prompt langkah 6 dengan catatan yang diinput
+  await ctx.api.editMessageText(
+    chatId,
+    notesPromptMsg.message_id,
+    `📝 <b>Langkah 6 dari 6: Catatan Tambahan</b>\n\n✅ <i>Catatan:</i> ${noteDisplay}`,
+    { parse_mode: 'HTML' }
+  ).catch(() => {});
 
   // 8. Simpan ke Database Supabase
   const createdItem = await conversation.external(() =>
