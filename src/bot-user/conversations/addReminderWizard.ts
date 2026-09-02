@@ -1,11 +1,18 @@
 import { Conversation, ConversationFlavor } from '@grammyjs/conversations';
-import { Context, InlineKeyboard } from 'grammy';
+import { Context, InlineKeyboard, SessionFlavor } from 'grammy';
 import { checkUserAccess } from '../../services/accessControl.js';
 import { getActiveCategories, createReminder } from '../../services/reminderService.js';
 import { parseDateInput, formatDateID, getNextUpcomingOccurrence } from '../../utils/dateHelper.js';
 import { escapeHTML, generateGoogleCalendarUrl } from '../../utils/telegramHelper.js';
 
-export type UserBotContext = Context & ConversationFlavor;
+export interface SessionData {
+  selectedPackageId?: number;
+  selectedPackageName?: string;
+  selectedPackageDuration?: number;
+  selectedPackagePrice?: number;
+}
+
+export type UserBotContext = Context & ConversationFlavor & SessionFlavor<SessionData>;
 export type UserBotConversation = Conversation<UserBotContext>;
 
 function isCancelInput(text?: string): boolean {

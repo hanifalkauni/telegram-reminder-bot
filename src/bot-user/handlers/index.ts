@@ -225,6 +225,12 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       return;
     }
 
+    // Simpan paket yang dipilih ke session
+    ctx.session.selectedPackageId = selectedPkg.id;
+    ctx.session.selectedPackageName = selectedPkg.name;
+    ctx.session.selectedPackageDuration = selectedPkg.duration_days;
+    ctx.session.selectedPackagePrice = Number(selectedPkg.price);
+
     const methods = await getActivePaymentMethods();
     const priceFormatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(selectedPkg.price);
 
@@ -422,21 +428,33 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     try {
       const adminBot = new Bot(env.BOT_TOKEN_ADMIN);
 
+      const selectedPkgName = ctx.session?.selectedPackageName;
+      const selectedDuration = ctx.session?.selectedPackageDuration;
+      const selectedPrice = ctx.session?.selectedPackagePrice;
+
       let caption = `💳 <b>BUKTI TRANSFER PEMBAYARAN MASUK!</b>\n\n`;
       caption += `👤 <b>Pengirim:</b> ${escapeHTML(from.first_name || 'User')} (@${from.username || 'tanpa_username'})\n`;
       caption += `🆔 <b>Telegram ID:</b> <code>${from.id}</code>\n`;
+
+      if (selectedPkgName) {
+        const durationStr = selectedDuration === 0 ? 'Seumur Hidup (Lifetime) ♾️' : `${selectedDuration} Hari`;
+        const priceStr = selectedPrice ? ` - Rp ${new Intl.NumberFormat('id-ID').format(selectedPrice)}` : '';
+        caption += `📦 <b>Paket Dipilih:</b> <b>${escapeHTML(selectedPkgName)}</b> (${durationStr}${priceStr})\n`;
+      } else {
+        caption += `📦 <b>Paket:</b> <i>(Pengguna langsung mengunggah foto)</i>\n`;
+      }
+
       if (ctx.message.caption) {
         caption += `📝 <b>Keterangan:</b> <code>${escapeHTML(ctx.message.caption)}</code>\n`;
       }
       caption += `\nSilakan verifikasi mutasi rekening dan klik tombol tindakan di bawah:`;
 
-      // 1-Tap Action Keyboard for Admins
+      // 1-Tap Action Keyboard for Admins (Disesuaikan dengan paket 1 Tahun dan Lifetime)
       const adminKeyboard = new InlineKeyboard()
-        .text('✅ Approve 30 Hari', `adm_app:${from.id}:30`)
         .text('✅ Approve 1 Tahun', `adm_app:${from.id}:365`)
-        .row()
         .text('♾️ Approve Lifetime', `adm_app:${from.id}:0`)
-        .text('❌ Tolak', `adm_rej:${from.id}`);
+        .row()
+        .text('❌ Tolak Pembayaran', `adm_rej:${from.id}`);
 
       // Ambil daftar admin
       const { data: admins } = await supabase.from('users').select('telegram_id').eq('is_admin', true);
