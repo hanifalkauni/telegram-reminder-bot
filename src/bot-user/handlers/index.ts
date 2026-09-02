@@ -182,6 +182,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   // 2. Pilih Paket & Tampilkan Invoice
   bot.callbackQuery(/^action:select_pkg:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const pkgId = parseInt(ctx.match[1], 10);
     const packages = await getActivePackages();
     const selectedPkg = packages.find((p) => p.id === pkgId);
@@ -228,6 +229,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
   // 3. Detail Item & Actions (View, Delete, Quick Renew, Snooze)
   bot.callbackQuery(/^action:view:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
+    await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     const reminderId = parseInt(ctx.match[1], 10);
     const from = ctx.from;
     if (!from) return;
