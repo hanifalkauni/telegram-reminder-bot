@@ -331,7 +331,7 @@ export async function editReminderWizard(
   // =========================================================================
   if (field === 'cycle') {
     const cycleKeyboard = new InlineKeyboard()
-      .text('❌ Sekali Saja (Tanpa Perulangan)', 'erec:NONE').row()
+      .text('1️⃣ Sekali Saja (Tanpa Perulangan)', 'erec:NONE').row()
       .text('📅 Tiap 1 Bulan', 'erec:MONTHLY')
       .text('🛠️ Tiap 3 Bulan', 'erec:QUARTERLY').row()
       .text('⚙️ Tiap 6 Bulan', 'erec:SEMI_ANNUAL')
@@ -371,7 +371,7 @@ export async function editReminderWizard(
     );
 
     const recLabelMap: Record<string, string> = {
-      NONE: 'Sekali Saja',
+      NONE: '1️⃣ Sekali Saja',
       MONTHLY: 'Tiap 1 Bulan',
       QUARTERLY: 'Tiap 3 Bulan',
       SEMI_ANNUAL: 'Tiap 6 Bulan',

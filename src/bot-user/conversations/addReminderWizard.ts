@@ -213,7 +213,7 @@ export async function addReminderWizard(
       recurringKeyboard.text('🌙 Tiap 1 Tahun Hijriyah (Kurban/Zakat ~354 Hari)', 'rec:HIJRI_YEARLY').row();
     }
     recurringKeyboard
-      .text('❌ Sekali Saja (Tanpa Perulangan)', 'rec:NONE').row()
+      .text('1️⃣ Sekali Saja (Tanpa Perulangan)', 'rec:NONE').row()
       .text('📅 Tiap 1 Bulan (Kos/Tagihan)', 'rec:MONTHLY')
       .text('🛠️ Tiap 3 Bulan (AC/Oli)', 'rec:QUARTERLY').row()
       .text('⚙️ Tiap 6 Bulan (Servis/KIR)', 'rec:SEMI_ANNUAL')
@@ -258,7 +258,7 @@ export async function addReminderWizard(
     }
 
     const recLabelMap: Record<string, string> = {
-      NONE: '❌ Sekali Saja (Tanpa Perulangan)',
+      NONE: '1️⃣ Sekali Saja (Tanpa Perulangan)',
       MONTHLY: '📅 Tiap 1 Bulan',
       QUARTERLY: '🛠️ Tiap 3 Bulan',
       SEMI_ANNUAL: '⚙️ Tiap 6 Bulan',
