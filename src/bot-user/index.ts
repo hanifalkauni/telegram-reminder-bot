@@ -3,7 +3,7 @@ import { conversations, createConversation } from '@grammyjs/conversations';
 import { env } from '../config/env.js';
 import { UserBotContext, addReminderWizard } from './conversations/addReminderWizard.js';
 import { editReminderWizard } from './conversations/editReminderWizard.js';
-import { generalRateLimiter } from '../middlewares/rateLimiter.js';
+import { generalRateLimiter, updateDeduplicator } from '../middlewares/rateLimiter.js';
 import { registerUserCommands } from './commands/index.js';
 import { registerUserHandlers } from './handlers/index.js';
 
@@ -12,14 +12,17 @@ import { notifyAdminsOnError } from '../services/errorAlertService.js';
 export function createUserBot(): Bot<UserBotContext> {
   const bot = new Bot<UserBotContext>(env.BOT_TOKEN_USER);
 
-  // 1. Session & Storage
+  // 1. Webhook Deduplicator (Cegah Telegram retry webhook ganda saat proses upload media)
+  bot.use(updateDeduplicator);
+
+  // 2. Session & Storage
   bot.use(
     session({
       initial: () => ({}),
     })
   );
 
-  // 2. Middlewares: Anti-Spam & Rate Limiter
+  // 3. Middlewares: Anti-Spam & Rate Limiter
   bot.use(generalRateLimiter);
 
   // 3. Conversation Plugin & Wizards

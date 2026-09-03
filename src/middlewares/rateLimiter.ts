@@ -6,6 +6,11 @@ interface RateLimitBucket {
   lastReset: number;
 }
 
+interface MediaLimitBucket {
+  count: number;
+  lastReset: number;
+}
+
 interface SupportDailyBucket {
   count: number;
   dateKey: string; // YYYY-MM-DD
@@ -14,10 +19,33 @@ interface SupportDailyBucket {
 // In-memory buckets for serverless invocation window
 const userRequestBuckets = new Map<number, RateLimitBucket>();
 const userSupportBuckets = new Map<number, SupportDailyBucket>();
-const userMediaBuckets = new Map<number, number>();
+const userMediaBuckets = new Map<number, MediaLimitBucket>();
+const processedUpdates = new Map<number, number>();
 
 /**
- * General Chat Anti-Spam Middleware (Max 3 req / 2s)
+ * Deduplicate Telegram Webhook Updates (Cegah re-entry saat Telegram retry webhook timeout)
+ */
+export async function updateDeduplicator(ctx: Context, next: NextFunction): Promise<void> {
+  const updateId = ctx.update?.update_id;
+  if (updateId) {
+    const now = Date.now();
+    // Bersihkan cache jika ukuran melebihi batas (hapus entri > 60 detik)
+    if (processedUpdates.size > 500) {
+      for (const [id, time] of processedUpdates.entries()) {
+        if (now - time > 60000) processedUpdates.delete(id);
+      }
+    }
+    if (processedUpdates.has(updateId)) {
+      // Update ini sudah/sedang diproses oleh invocation sebelumnya (Telegram retry)
+      return;
+    }
+    processedUpdates.set(updateId, now);
+  }
+  return next();
+}
+
+/**
+ * General Chat Anti-Spam Middleware (Max 5 req / 2s & Max 3 media / 5s)
  */
 export async function generalRateLimiter(ctx: Context, next: NextFunction): Promise<void> {
   const userId = ctx.from?.id;
@@ -33,20 +61,29 @@ export async function generalRateLimiter(ctx: Context, next: NextFunction): Prom
     bucket.count += 1;
     if (bucket.count > APP_CONSTANTS.RATE_LIMIT.MAX_REQUESTS) {
       if (bucket.count === APP_CONSTANTS.RATE_LIMIT.MAX_REQUESTS + 1) {
-        await ctx.reply('⚠️ <b>Terlalu Cepat!</b> Mohon tunggu 2 detik sebelum mengirim pesan berikutnya.', { parse_mode: 'HTML' });
+        await ctx.reply('⚠️ <b>Terlalu Cepat!</b> Mohon tunggu sebentar sebelum mengirim pesan berikutnya.', { parse_mode: 'HTML' });
       }
       return; // Drop message
     }
   }
 
-  // Media throttling
+  // Media throttling (Bucket-based: Maksimal 3 media / 5 detik untuk mencegah spam tanpa memblokir upload wajar)
   if (ctx.message?.photo || ctx.message?.document) {
-    const lastMediaTime = userMediaBuckets.get(userId) || 0;
-    if (now - lastMediaTime < APP_CONSTANTS.RATE_LIMIT.MEDIA_WINDOW_MS) {
-      await ctx.reply('⚠️ Mohon tunggu 15 detik sebelum mengunggah foto/media berikutnya.', { parse_mode: 'HTML' });
-      return;
+    let mediaBucket = userMediaBuckets.get(userId);
+    const mediaWindow = 5000; // 5 detik window
+
+    if (!mediaBucket || now - mediaBucket.lastReset > mediaWindow) {
+      mediaBucket = { count: 1, lastReset: now };
+      userMediaBuckets.set(userId, mediaBucket);
+    } else {
+      mediaBucket.count += 1;
+      if (mediaBucket.count > 3) {
+        if (mediaBucket.count === 4) {
+          await ctx.reply('⚠️ <b>Terlalu Cepat!</b> Mohon tunggu beberapa detik sebelum mengunggah foto/media berikutnya.', { parse_mode: 'HTML' });
+        }
+        return;
+      }
     }
-    userMediaBuckets.set(userId, now);
   }
 
   return next();

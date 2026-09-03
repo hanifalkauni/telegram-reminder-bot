@@ -477,13 +477,23 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
     await ctx.deleteMessage().catch(() => {});
   });
 
-  // 4. Upload Foto Bukti Pembayaran (Auto-Forward ke Admin Bot dengan Tombol 1-Tap Approval)
-  bot.on('message:photo', async (ctx) => {
+  // 4. Upload Foto/Dokumen Bukti Pembayaran (Auto-Forward ke Admin Bot dengan Tombol 1-Tap Approval)
+  bot.on(['message:photo', 'message:document'], async (ctx) => {
     const from = ctx.from;
     if (!from) return;
 
-    const photos = ctx.message.photo;
-    const highestResPhoto = photos[photos.length - 1];
+    let fileId: string | null = null;
+    let fileName = 'bukti_transfer.jpg';
+    const isDoc = Boolean(ctx.message?.document);
+
+    if (ctx.message?.photo && ctx.message.photo.length > 0) {
+      fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
+    } else if (ctx.message?.document) {
+      fileId = ctx.message.document.file_id;
+      fileName = ctx.message.document.file_name || 'bukti_transfer.pdf';
+    }
+
+    if (!fileId) return;
 
     try {
       const adminBot = new Bot(env.BOT_TOKEN_ADMIN);
@@ -501,7 +511,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
         const priceStr = selectedPrice ? ` - Rp ${new Intl.NumberFormat('id-ID').format(selectedPrice)}` : '';
         caption += `📦 <b>Paket Dipilih:</b> <b>${escapeHTML(selectedPkgName)}</b> (${durationStr}${priceStr})\n`;
       } else {
-        caption += `📦 <b>Paket:</b> <i>(Pengguna langsung mengunggah foto)</i>\n`;
+        caption += `📦 <b>Paket:</b> <i>(Pengguna langsung mengunggah bukti pembayaran)</i>\n`;
       }
 
       if (ctx.message.caption) {
@@ -520,30 +530,38 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
       const { data: admins } = await supabase.from('users').select('telegram_id').eq('is_admin', true);
 
       if (admins && admins.length > 0) {
-        // Download buffer foto asli via User Bot agar dapat di-upload sebagai file binary ke Admin Bot
-        let photoBuffer: Buffer | null = null;
+        // Download buffer file asli via User Bot agar dapat di-upload sebagai file binary ke Admin Bot
+        let fileBuffer: Buffer | null = null;
         try {
-          const fileInfo = await ctx.api.getFile(highestResPhoto.file_id);
+          const fileInfo = await ctx.api.getFile(fileId);
           if (fileInfo.file_path) {
             const fileUrl = `https://api.telegram.org/file/bot${env.BOT_TOKEN_USER}/${fileInfo.file_path}`;
             const res = await fetch(fileUrl);
             if (res.ok) {
               const arrayBuffer = await res.arrayBuffer();
-              photoBuffer = Buffer.from(arrayBuffer);
+              fileBuffer = Buffer.from(arrayBuffer);
             }
           }
         } catch (fileErr) {
-          console.warn('Could not fetch photo buffer from user bot:', fileErr);
+          console.warn('Could not fetch file buffer from user bot:', fileErr);
         }
 
         for (const adm of admins) {
           try {
-            if (photoBuffer) {
-              await adminBot.api.sendPhoto(adm.telegram_id, new InputFile(photoBuffer, 'bukti_transfer.jpg'), {
-                caption,
-                parse_mode: 'HTML',
-                reply_markup: adminKeyboard,
-              });
+            if (fileBuffer) {
+              if (isDoc) {
+                await adminBot.api.sendDocument(adm.telegram_id, new InputFile(fileBuffer, fileName), {
+                  caption,
+                  parse_mode: 'HTML',
+                  reply_markup: adminKeyboard,
+                });
+              } else {
+                await adminBot.api.sendPhoto(adm.telegram_id, new InputFile(fileBuffer, fileName), {
+                  caption,
+                  parse_mode: 'HTML',
+                  reply_markup: adminKeyboard,
+                });
+              }
             } else {
               await adminBot.api.sendMessage(adm.telegram_id, caption, {
                 parse_mode: 'HTML',
@@ -551,7 +569,7 @@ export function registerUserHandlers(bot: Bot<UserBotContext>): void {
               });
             }
           } catch (sendErr) {
-            console.error(`Failed to send photo to admin ${adm.telegram_id}, fallback to text:`, sendErr);
+            console.error(`Failed to send media to admin ${adm.telegram_id}, fallback to text:`, sendErr);
             await adminBot.api.sendMessage(adm.telegram_id, caption, {
               parse_mode: 'HTML',
               reply_markup: adminKeyboard,

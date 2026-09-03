@@ -1,6 +1,7 @@
 import { Bot, Context } from 'grammy';
 import { env } from '../config/env.js';
 import { requireAdmin } from '../middlewares/authGuard.js';
+import { updateDeduplicator } from '../middlewares/rateLimiter.js';
 import { registerAdminCommands } from './commands/index.js';
 import { registerAdminHandlers } from './handlers/index.js';
 
@@ -9,7 +10,10 @@ import { notifyAdminsOnError } from '../services/errorAlertService.js';
 export function createAdminBot(): Bot<Context> {
   const bot = new Bot<Context>(env.BOT_TOKEN_ADMIN);
 
-  // 1. Auth Guard Middleware (Hanya admin yang boleh mengakses command/handler selain pesan master code)
+  // 1. Webhook Deduplicator
+  bot.use(updateDeduplicator);
+
+  // 2. Auth Guard Middleware (Hanya admin yang boleh mengakses command/handler selain pesan master code)
   bot.use(async (ctx, next) => {
     // Jika pesan adalah master admin code, izinkan lewat agar bisa promosi
     if (ctx.message?.text?.trim() === env.ADMIN_MASTER_CODE) {

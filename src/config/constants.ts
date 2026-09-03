@@ -5,9 +5,9 @@ export const APP_CONSTANTS = {
   TELEGRAM_BATCH_LIMIT_PER_SECOND: 25, // safe limit under 30
   SUPPORT_MAX_DAILY_MESSAGES: 3,
   RATE_LIMIT: {
-    MAX_REQUESTS: 3,
-    WINDOW_MS: 2000, // 3 requests per 2 seconds
-    MEDIA_WINDOW_MS: 15000, // 1 media upload per 15 seconds
+    MAX_REQUESTS: 5,
+    WINDOW_MS: 2000, // 5 requests per 2 seconds
+    MEDIA_WINDOW_MS: 2000, // 2 seconds media window (safe burst, prevents 15s lockouts)
   }
 };
 
