@@ -13,10 +13,11 @@
 
 [Fitur Utama](#-fitur-utama) •
 [Daftar Kategori](#-16-kategori-pengingat-komprehensif) •
-[Arsitektur Dual Bot](#-arsitektur-dual-bot) •
+[Arsitektur Dual Bot](#-arsitektur-dual-bot--alur-sistem) •
 [Daftar Perintah](#-daftar-perintah-lengkap) •
 [Panduan Instalasi](#-panduan-instalasi--pengembangan-lokal) •
-[Deploy Produksi](#-panduan-deploy-ke-vercel-produksi)
+[Deploy Produksi](#-panduan-deploy-ke-vercel-produksi) •
+[Lisensi](#-lisensi--ketentuan-penggunaan-komersial)
 
 </div>
 
@@ -24,7 +25,7 @@
 
 ## 📖 Tentang Ingatin
 
-**Ingatin** adalah solusi SaaS (*Software-as-a-Service*) modern yang dirancang untuk mencegah kelalaian fatal akibat lupa tanggal jatuh tempo (seperti garansi gadget hangus, denda pajak STNK, paspor mati saat traveling, atau terlewatnya perpanjangan sewa dan momen ulang tahun).
+**Ingatin** adalah solusi SaaS (*Software-as-a-Service*) modern yang dirancang untuk mencegah kelalaian fatal akibat lupa tanggal jatuh tempo (seperti garansi gadget hangus, denda pajak STNK/SIM, paspor mati saat traveling, tagihan kartu, atau terlewatnya perpanjangan sewa dan momen ulang tahun).
 
 Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Zero Infrastructure Cost** yang berjalan 100% di free-tier Vercel dan Supabase PostgreSQL.
 
@@ -32,15 +33,19 @@ Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Z
 
 ## 🌟 Fitur Utama
 
-### 💎 1. Model Bisnis Freemium SaaS
+### 💎 1. Model Bisnis Freemium SaaS & Smart Stacking
 - **Free Trial**: Setiap pengguna baru otomatis mendapatkan kuota gratis hingga **2 item pengingat aktif**.
-- **Pro Subscriber**: Akses **tanpa batas (*Unlimited*)** untuk menambah reminder, notifikasi berkala, dan fitur ekspor CSV.
-- **Sistem Voucher (*Redeem Engine*)**: Generator kode voucher acak 8 karakter untuk aktivasi instan tanpa verifikasi manual.
+- **Pro Subscriber**: Akses **tanpa batas (*Unlimited*)** untuk menambah reminder, notifikasi berkala, kustom interval, dan fitur ekspor CSV.
+- **Smart Subscription Stacking (Akumulatif)**: Pembelian paket baru atau voucher langsung ditambahkan (*stacked*) di atas sisa masa aktif yang sedang berjalan tanpa menghanguskan sisa hari sebelumnya.
+- **Sistem Voucher Interaktif (*Redeem Engine*)**: Generator kode voucher unik 8 karakter dengan aktivasi instan, mode percakapan interaktif, auto-detect kode di chat, dan proteksi *Single-Use Anti-Fraud*.
 
 ### 📅 2. Manajemen & Fleksibilitas Pengingat Cerdas
 - **16 Kategori Lengkap**: Mencakup gadget, kendaraan, medis, finansial, ibadah universal, pendidikan, legalitas, hingga tanaman dan hewan peliharaan.
+- **✏️ Fitur Edit Pengingat Lengkap**: Pengguna dapat mengedit Judul, Tanggal, Estimasi Biaya, Interval Notifikasi (H-), Catatan/Foto, dan Siklus Perulangan kapan saja secara langsung dari kartu detail item.
+- **🔔 Custom Reminder Interval**: Pengguna bebas memilih preset (Standar Kategori, Ringkas H-7/H-1, Hari H saja) atau mengetik angka hari H- kustom sendiri (contoh: `90, 60, 30, 14, 7, 1, 0`).
+- **Parser Tanggal Super Fleksibel**: Menerima tahun kelahiran (1900–2100), format `YYYY-MM-DD`, `DD/MM/YYYY`, `DD/MM` (tanpa tahun), maupun teks Indonesia (contoh: `1 Juni 1996` atau `15 Oktober`).
 - **Siklus Perulangan Fleksibel (*Multi-Cycle Recurrence*)**:
-  - `Sekali Saja` *(Garansi, Paspor)*
+  - `Sekali Saja` *(Garansi, Paspor, Tiket)*
   - `Tiap 1 Bulan` *(Sewa Kos, Tagihan IPL/Wifi)*
   - `Tiap 3 Bulan` *(Cuci AC, Ganti Oli Motor, Obat Kutu)*
   - `Tiap 6 Bulan` *(Servis Mobil, Uji KIR, Scaling Gigi)*
@@ -48,21 +53,23 @@ Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Z
   - `Tiap 5 Tahun` *(SIM A/C, Kartu ATM, Paspor)*
   - `Tiap 1 Tahun Hijriyah (~354 Hari)` *(Kurban Idul Adha 10 Dzulhijjah, Haul Zakat Maal)*
 - **Smart Hijri Engine**: Konversi otomatis kalender Islam *Umm al-Qura* via `Intl.DateTimeFormat` sehingga pengingat ibadah otomatis maju ~10-11 hari Masehi setiap tahunnya.
-- **Auto-Advance pada Hari H**: Item berulang otomatis memajukan tanggal ke siklus berikutnya tanpa perlu input ulang manual.
+- **Auto-Advance pada Hari H**: Item berulang otomatis memajukan tanggal ke siklus berikutnya setelah hari H terlewati.
 
 ### 💵 3. Estimasi Anggaran (*Budget Tracking*) & Agenda Bulanan
 - **Pencatatan Biaya**: Memasukkan estimasi dana pada item (misal: Pajak Mobil Rp 2.500.000 atau Cuci AC Rp 150.000).
 - **Perintah `/agenda`**: Rekap kalender jatuh tempo khusus bulan berjalan lengkap dengan total akumulasi pengeluaran dana yang harus disiapkan.
 
 ### ⚡ 4. Tindakan Cepat & Integrasi Kalender
-- **1-Klik Simpan ke Google Calendar**: Tombol direct-link URL di setiap notifikasi dan kartu item untuk menambahkan event ke Google Calendar instan tanpa OAuth.
-- **Tombol Quick Renew**: Perpanjang item secara instan: `[+1 Bln]`, `[+3 Bln]`, `[+6 Bln]`, `[+1 Thn]`, atau `[⏸️ Snooze +7 Hari]`.
+- **1-Klik Simpan ke Google Calendar**: Tombol direct-link URL di setiap notifikasi dan kartu item untuk menambahkan event ke Google Calendar instan tanpa perlu login OAuth.
+- **Tombol Quick Renew**: Perpanjang item secara instan dari chat: `[+1 Bln]`, `[+3 Bln]`, `[+6 Bln]`, `[+1 Thn]`, `[+5 Thn]`, atau `[⏸️ Snooze +7 Hari]`.
 - **Ekspor Data CSV (`/export`)**: Mengunduh seluruh database pengingat pengguna ke file spreadsheet.
+- **Batalkan Proses Fleksibel**: Tombol `[❌ Batalkan]` dan interceptor `/cancel` / `/batal` di setiap langkah wizard.
 
-### 🤖 5. Panel Admin & Pengelolaan Pembayaran
+### 🤖 5. Panel Admin, Pembayaran & Error Alerting
 - **Dual Telegram Bot**: Bot Pengguna terpisah dari Bot Admin untuk menjaga keamanan dan efisiensi.
-- **Persetujuan Pembayaran 1-Klik**: Bukti transfer diteruskan langsung via Telegram `file_id` (tanpa storage pihak ketiga); Admin cukup menekan tombol `[Approve 1 Tahun]` atau `[Approve Lifetime]`.
-- **Broadcast & Tiket Bantuan**: Admin dapat membalas tiket bantuan `/contact` secara langsung (`/reply <id> <pesan>`) dan mengirim pesan massal (`/broadcast <pesan>`).
+- **Persetujuan Pembayaran 1-Klik**: Bukti transfer foto diunduh ke memory buffer dan dikirimkan sebagai file biner asli ke Bot Admin lengkap dengan nama paket yang dipilih dan tombol tindakan `[✅ Approve 1 Tahun]`, `[♾️ Approve Lifetime]`, dan `[❌ Tolak Pembayaran]`.
+- **🚨 Real-Time Admin Error Alerting**: Sistem otomatis mengirim notifikasi detail stack trace error ke Bot Admin jika terjadi kendala pada User Bot, Admin Bot, atau Cron Worker.
+- **Broadcast & Tiket Bantuan**: Admin dapat membalas tiket bantuan `/contact` secara langsung (`/reply <id> <pesan>`) dan mengirim pengumuman massal (`/broadcast <pesan>`).
 
 ### 🛡️ 6. Keamanan & Performa Tinggi
 - **Zero Duplicate Alerts (Idempotency)**: Tabel `reminder_delivery_logs` menjamin notifikasi tidak pernah terkirim ganda meskipun cron mengalami *retry*.
@@ -82,14 +89,14 @@ Dibangun dengan pendekatan **Clean Architecture**, **Serverless-First**, dan **Z
 | **Ibadah, Donasi & Hari Keagamaan**| 🕊️ | Kurban Idul Adha, Zakat Maal, Persepuluhan, Natal, Nyepi | H-30, 14, 7, 3, 0 |
 | **Karier, Pajak SPT & Kontrak** | 👔 | Batas lapor SPT tahunan, probation kerja, SKCK | H-30, 14, 7, 3, 1, 0 |
 | **Pendidikan, SPP & UKT Kuliah** | 🎓 | Uang semesteran UKT, SPP bulanan sekolah anak | H-30, 14, 7, 3, 1, 0 |
-| **Garansi Gadget & Elektronik** | 💻 | Laptop, HP, iPad, TV, kulkas, AC, mesin cuci | H-30, 7, 3, 1, 0 |
+| **Garansi Gadget & Elektronik** | 💻 | Laptop, HP, iPad, TV, kulkas, AC, mesin cuci | H-30, 14, 7, 1, 0 |
 | **Paspor, Visa & Lisensi Profesi**| 📄 | Paspor, STR Dokter/Nakes, KTA Advokat, Sertifikat K3 | H-60, 30, 14, 7, 0 |
 | **Travel, Visa & Poin/Miles** | ✈️ | Expired visa turis, masa berlaku GarudaMiles/KrisFlyer | H-14, 7, 3, 1, 0 |
 | **Domain, Hosting & Subscription**| 🌐 | Domain web, server VPS, SSL, Netflix, Spotify | H-14, 7, 3, 1, 0 |
 | **Sewa Properti, Kos & Tagihan** | 🏠 | Sewa rumah, kos bulanan, PBB tahunan, IPL apartemen | H-30, 14, 7, 3, 1, 0 |
+| **Polis Asuransi & Kesehatan** | 🏥 | Asuransi jiwa, asuransi kendaraan, polis BPJS/Prudential | H-30, 14, 7, 1, 0 |
 | **Tanaman & Perawatan Kebun** | 🪴 | Pemupukan rutin, ganti media tanam / repotting | H-7, 3, 1, 0 |
 | **Perawatan Hewan Peliharaan** | 🐾 | Obat cacing & kutu kucing/anjing, vaksin rabies | H-7, 3, 1, 0 |
-| **Lainnya / Kebutuhan Pribadi** | 📌 | Kebutuhan kustom pengguna | H-30, 7, 3, 1, 0 |
 
 ---
 
@@ -121,41 +128,48 @@ flowchart TD
     CRON -->|Query Due Reminders| DB
     CRON -->|Send Push Notification| UB
     
-    U_WH -.->|Forward Bukti Transfer file_id| AB
+    U_WH -.->|Forward Binary Photo Bukti Transfer| AB
     A_WH -.->|One-Tap Approval Trigger| U_WH
+    U_WH -.->|Real-time Error Alert| AB
 ```
 
 ---
 
 ## ⌨️ Daftar Perintah Lengkap
 
-### 👤 User Bot Commands
+### 👤 User Bot Commands (`@IngatinBot`)
 | Perintah | Deskripsi |
 | :--- | :--- |
 | `/start` | Menampilkan pesan sambutan, status akun, dan menu navigasi utama. |
-| `/add` | Membuka Wizard Interaktif 6 Langkah untuk mencatat item baru. |
-| `/list` atau `/reminders` | Melihat daftar semua reminder aktif dengan status urgensi dan tombol detail. |
+| `/add` | Membuka Wizard Interaktif 7 Langkah untuk mencatat item baru (kategori, nama, tanggal, siklus, interval alert, biaya, catatan/foto). |
+| `/list` atau `/reminders` | Melihat daftar semua reminder aktif dengan status urgensi, tombol detail, edit, dan hapus. |
 | `/agenda` atau `/upcoming` | Rekapitulasi agenda jatuh tempo bulan ini & estimasi pengeluaran dana. |
 | `/profile` atau `/status` | Cek sisa kuota, status langganan (*Free Trial* / *Pro*), dan sisa masa aktif. |
-| `/subscribe` | Menampilkan pilihan paket berlangganan dan invoice pembayaran (BCA / QRIS). |
-| `/redeem <code>` | Mengaktifkan paket langganan menggunakan kode voucher 8 karakter. |
+| `/about` *(alias `/tentang`, `/info`)* | Info detail fungsi bot, jadwal pengingat per kategori, dan kebijakan privasi. |
+| `/subscribe` | Menampilkan pilihan paket berlangganan (1 Tahun / Lifetime) dan invoice pembayaran. |
+| `/redeem [kode]` | Mengaktifkan paket langganan via kode voucher (mendukung format langsung maupun interaktif). |
 | `/export` | Mengunduh seluruh data reminder pengguna ke file spreadsheet (CSV). |
-| `/contact <pesan>` | Mengirim tiket bantuan/pertanyaan ke tim Admin (Maksimal 3 pesan/hari). |
+| `/contact [pesan]` | Mengirim tiket bantuan/pertanyaan ke tim Admin (Maksimal 3 pesan/hari). |
+| `/cancel` *(alias `/batal`)* | Membatalkan proses wizard yang sedang berlangsung. |
 | `/help` | Panduan lengkap penggunaan bot dan daftar perintah. |
 
-### 👑 Admin Bot Commands
+### 👑 Admin Bot Commands (`@IngatinAdminBot`)
 | Perintah | Deskripsi |
 | :--- | :--- |
-| `/start <master_code>` | Autentikasi dan promosi user menjadi Administrator bot. |
-| `/admin_stats` | Melihat analitik bisnis: Total user, subscriber aktif, total reminder, dan konfirmasi pending. |
+| `/start` | Login autentikasi administrator dan menu panel kontrol. |
+| `/admin_stats` | Melihat analitik bisnis: Total user, subscriber aktif, total reminder, dan conversion rate. |
 | `/users [keyword]` | Mencari dan melihat daftar pengguna beserta status langganannya. |
 | `/extend <user_id> <hari>`| Menambah masa aktif pengguna secara manual (`0` untuk Lifetime). |
 | `/reply <user_id> <pesan>`| Membalas tiket bantuan `/contact` langsung ke chat Telegram pengguna. |
 | `/broadcast <pesan>` | Mengirim pesan pengumuman/promo massal ke seluruh pengguna terdaftar. |
 | `/packages` | Melihat dan mengelola paket langganan yang aktif. |
+| `/add_package Nama \| Hari \| Harga \| [Badge]` | Menambahkan paket langganan baru. |
+| `/delete_package <id>` | Menghapus paket langganan. |
 | `/payments` | Melihat metode pembayaran dan rekening bank yang tersedia. |
-| `/add_qris` | Mengunggah gambar QRIS pembayaran baru. |
-| `/generate_code <hari>` | Menghasilkan kode voucher unik 8 karakter untuk dibagikan ke customer. |
+| `/add_payment Bank \| NoRek \| AtasNama` | Menambahkan nomor rekening bank baru. |
+| `/add_qris Nama \| AtasNama` | Mengunggah gambar barcode QRIS pembayaran baru. |
+| `/delete_payment <id>` | Menghapus rekening/metode pembayaran. |
+| `/generate_code <hari>` | Menghasilkan kode voucher unik 8 karakter (contoh: `/generate_code 365` atau `0` untuk Lifetime). |
 
 ---
 
@@ -195,7 +209,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 # Keamanan Webhook & Cron
-ADMIN_MASTER_CODE=TEMPO_ADMIN_SECRET_2026
+ADMIN_MASTER_CODE=ADMIN_SECRET_PASSWORD_2026
 TELEGRAM_SECRET_TOKEN=random_secure_token_for_webhook
 CRON_SECRET=random_secure_token_for_cron
 ```
@@ -254,19 +268,21 @@ File [`vercel.json`](vercel.json) sudah terkonfigurasi untuk mengeksekusi worker
 telegram-reminder-bot/
 ├── api/                             # Serverless Endpoints (Vercel Functions)
 │   ├── bot/
-│   │   ├── user-webhook.ts          # Endpoint Webhook User Bot
-│   │   └── admin-webhook.ts         # Endpoint Webhook Admin Bot
+│   │   ├── user-webhook.ts          # Endpoint Webhook User Bot (Node HTTP Adapter)
+│   │   └── admin-webhook.ts         # Endpoint Webhook Admin Bot (Node HTTP Adapter)
 │   └── cron/
 │       └── reminder-worker.ts       # Endpoint Cron Pengingat Harian (07:00 WIB)
 ├── src/
 │   ├── bot-user/                    # Logika User Bot (grammY)
-│   │   ├── commands/index.ts        # /start, /list, /agenda, /profile, /export, dll
-│   │   ├── conversations/           # Interactive Wizard /add (6 Langkah)
-│   │   ├── handlers/index.ts        # Callback Queries, Quick Renew, Google Calendar
-│   │   └── index.ts                 # Inisialisasi User Bot & Middlewares
+│   │   ├── commands/index.ts        # /start, /about, /list, /agenda, /profile, /export, dll
+│   │   ├── conversations/           # Wizard: addReminderWizard (7 Langkah) & editReminderWizard
+│   │   │   ├── addReminderWizard.ts # Wizard Penambahan Pengingat Interaktif
+│   │   │   └── editReminderWizard.ts# Wizard Pengeditan Field Reminder
+│   │   ├── handlers/index.ts        # Callback Queries, Quick Renew, Edit Menu, Upload Foto
+│   │   └── index.ts                 # Inisialisasi User Bot & Error Catching
 │   ├── bot-admin/                   # Logika Admin Bot (grammY)
-│   │   ├── commands/index.ts        # /admin_stats, /users, /extend, /broadcast, dll
-│   │   ├── handlers/index.ts        # One-Tap Approval Bukti Transfer
+│   │   ├── commands/index.ts        # /admin_stats, /users, /extend, /broadcast, /packages, dll
+│   │   ├── handlers/index.ts        # One-Tap Approval Bukti Transfer & Penolakan
 │   │   └── index.ts                 # Inisialisasi Admin Bot
 │   ├── config/                      # Environment & Konstanta Aplikasi
 │   │   ├── env.ts                   # Validasi Zod Runtime Envs
@@ -282,16 +298,18 @@ telegram-reminder-bot/
 │   │   └── rateLimiter.ts           # Token Bucket Anti-Flood Middleware
 │   ├── services/                    # Business Logic Services
 │   │   ├── accessControl.ts         # Manajemen Akses, Kuota & Upgrade
+│   │   ├── errorAlertService.ts     # Real-Time Error Alerting ke Bot Admin
 │   │   ├── notificationService.ts   # Cron Dispatcher, Idempotency & Expiry Warning
-│   │   ├── reminderService.ts       # CRUD Reminder, Quick Renew, Monthly Agenda
-│   │   └── subscriptionService.ts   # Paket, Pembayaran, Voucher Generator
+│   │   ├── reminderService.ts       # CRUD Reminder, Quick Renew, Edit Item, Monthly Agenda
+│   │   └── subscriptionService.ts   # Paket, Pembayaran, Voucher Generator & Stacking
 │   ├── types/                       # Definisi Tipe TypeScript Database & Bot
 │   │   └── database.ts
 │   └── utils/                       # Helpers & Utility Functions
-│       ├── dateHelper.ts            # Parser Tanggal, Selisih Hari, Hijri Engine
+│       ├── dateHelper.ts            # Parser Tanggal (1900-2100), Selisih Hari, Hijri Engine
 │       └── telegramHelper.ts        # Format Kartu, Google Calendar URL, Escape HTML
 ├── .env.example                     # Template Variabel Lingkungan
 ├── .gitignore                       # Rule Git Ignore
+├── LICENSE.md                       # Lisensi Dual License (Personal Free & Commercial Paid)
 ├── package.json                     # Konfigurasi Dependensi & Scripts
 ├── tsconfig.json                    # Konfigurasi TypeScript NodeNext
 ├── vercel.json                      # Konfigurasi Vercel Serverless & Cron
@@ -314,3 +332,4 @@ Untuk pembelian lisensi komersial atau konsultasi deployment korporat, silakan h
 - **Telegram**: [@hanifalkauni](https://t.me/hanifalkauni)
 
 Lihat detail lengkap perjanjian pada file [LICENSE.md](LICENSE.md).
+
